@@ -169,6 +169,8 @@ Silent environmental changes are considered an architectural breach.
 
 Before proposing changes, scan for existing guidance documents beyond this file, including any project docs that define AI behavior, operations, or workflow. If a relevant document exists, update it instead of creating a new one. Do not add new guidance documents without explicit approval.
 
+This repo also includes AI skills under `docs/skills/`. When a request matches those skills, read the relevant `SKILL.md` and follow it.
+
 ---
 
 ## 8. Preferred AI Behavior
