@@ -64,7 +64,6 @@ When Pages is live, you can set a custom domain in your repository settings. Add
 If you want future engine updates, run:
 
 ```sh
-npm run init
 npm run update
 ```
 

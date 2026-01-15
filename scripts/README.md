@@ -29,7 +29,7 @@ The build script writes the site output only. Prose linting is a separate step y
 ## Build on change and serve
 
 ```sh
-npm run dev
+npm start
 ```
 
 This runs the lint report, builds the site, starts the local server, and rebuilds on changes in `content/`, `example/`, and `config/`. By default the dev server binds to `127.0.0.1`; set `HOST=0.0.0.0` if you need to reach it from another device, and override the port with `PORT=xxxx` if needed.
@@ -50,25 +50,25 @@ npm run lint
 To include published posts:
 
 ```sh
-npm run lint:all
+npm run lint -- --all
 ```
 
 To enforce thresholds (useful for CI):
 
 ```sh
-npm run lint:gate
+npm run lint -- --all --gate
 ```
 
 Defaults are per file: high>=1, medium>=3, low>=6. You can override them:
 
 ```sh
-node scripts/prose-lint.js --all --gate --max-high=1 --max-medium=2 --max-low=5
+npm run lint -- --all --gate --max-high=1 --max-medium=2 --max-low=5
 ```
 
 If you want fail-fast instead of thresholds:
 
 ```sh
-npm run lint:strict
+npm run lint -- --all --strict
 ```
 
 When the dev build emits warnings or lint issues, it also writes `temp/build-report.json` with the combined warnings and lint report. This gives the preview UI one place to read diagnostics without stopping the server.

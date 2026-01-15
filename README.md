@@ -71,11 +71,10 @@ Once GitHub Pages is live, you can set a custom domain in the repository setting
 If you want upstream changes later, run:
 
 ```sh
-npm run init
 npm run update
 ```
 
-Setup now adds the upstream remote automatically, so `npm run init` is optional if you only need to refresh it. Conflicts are rare if your edits stay inside `content/`, but they can happen if you modify engine files. Treat those merges as you would any other Git change.
+Setup adds the upstream remote automatically, and `npm run update` will add it if it is missing. Conflicts are rare if your edits stay inside `content/`, but they can happen if you modify engine files. Treat those merges as you would any other Git change.
 
 ## Tooling notes
 

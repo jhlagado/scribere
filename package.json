@@ -2,18 +2,10 @@
   "name": "scribere",
   "private": true,
   "scripts": {
-    "start": "bash -c 'clear && npm run dev && npm run dev'",
+    "start": "bash -c 'set -e; BUILD_CMD=\"npm run -s lint -- --all --report-path temp/lint-report.json || echo \\\"[lint] issues (non-blocking)\\\"; SOFT_FAIL=1 LINT_REPORT_PATH=temp/lint-report.json node scripts/build.js && echo \\\"[build] ok\\\"\"; bash -c \"$BUILD_CMD\"; HOST=${HOST:-127.0.0.1} node scripts/serve.js & srv_pid=$!; trap \"if [ -n \\\"$srv_pid\\\" ]; then kill \\\"$srv_pid\\\" 2>/dev/null; fi\" EXIT; echo \"[dev] watching for changes\"; nodemon --quiet --on-change-only --exitcrash --legacy-watch --watch content --watch example --watch config --ignore build --ext md,html,css,js,json,svg --exec \"bash -c \\\"$BUILD_CMD\\\"\"'",
     "build": "node scripts/build.js",
-    "build:dev": "npm run -s lint:dev || echo \"[lint] issues (non-blocking)\"; SOFT_FAIL=1 LINT_REPORT_PATH=temp/lint-report.json node scripts/build.js && echo \"[build] ok\"",
-    "dev": "bash -c 'set -e; npm run -s build:dev; HOST=${HOST:-127.0.0.1} npm run -s srv & srv_pid=$!; trap \"if [ -n \\\"$srv_pid\\\" ]; then kill \\\"$srv_pid\\\" 2>/dev/null; fi\" EXIT; echo \"[dev] watching for changes\"; nodemon --quiet --on-change-only --exitcrash --legacy-watch --watch content --watch example --watch config --ignore build --ext md,html,css,js,json,svg --exec \"npm run -s build:dev\"'",
-    "init": "bash -c 'git remote get-url upstream >/dev/null 2>&1 || git remote add upstream https://github.com/jhlagado/scribere.git; git fetch upstream'",
     "lint": "node scripts/prose-lint.js",
-    "lint:all": "node scripts/prose-lint.js --all",
-    "lint:dev": "node scripts/prose-lint.js --all --report-path temp/lint-report.json",
-    "lint:strict": "node scripts/prose-lint.js --all --strict",
-    "lint:gate": "node scripts/prose-lint.js --all --gate",
-    "srv": "node scripts/serve.js",
-    "update": "bash -c 'git fetch upstream && git merge --no-edit upstream/main'",
+    "update": "bash -c 'git remote get-url upstream >/dev/null 2>&1 || git remote add upstream https://github.com/jhlagado/scribere.git; git fetch upstream && git merge --no-edit upstream/main'",
     "setup": "node scripts/setup.js"
   },
   "devDependencies": {
