@@ -10,11 +10,7 @@ If `/content/` does not exist, the build uses `/example/` as the live instance. 
 
 Install Node.js from the official site: https://nodejs.org/en
 
-The dev server uses `nodemon` for file watching. Install it once globally:
-
-```sh
-npm install -g nodemon
-```
+The dev server uses `nodemon` for file watching, and it is installed as a dev dependency when you run `npm install`.
 
 ## Create a new blog from scratch
 

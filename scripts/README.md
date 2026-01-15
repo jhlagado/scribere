@@ -1,6 +1,6 @@
 # Local Scripts
 
-These scripts are intended for local use and are not part of CI. The repository does not manage tool installs. Instead, the required tools are installed globally and used as needed.
+These scripts are intended for local use and are not part of CI. Node.js is required, and dev tools like `nodemon` are installed with `npm install`.
 
 Node.js is required to run the scripts in this folder. Install it globally using your preferred method. Two common options are:
 
@@ -27,12 +27,6 @@ npm run build
 The build script writes the site output only. Prose linting is a separate step you run when you want it.
 
 ## Build on change and serve
-
-Install nodemon globally:
-
-```sh
-npm install -g nodemon
-```
 
 ```sh
 npm run dev

@@ -15,5 +15,8 @@
     "srv": "node scripts/serve.js",
     "update": "bash -c 'git fetch upstream && git merge --no-edit upstream/main'",
     "setup": "node scripts/setup.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }
