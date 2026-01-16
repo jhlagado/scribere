@@ -71,6 +71,9 @@ const LINT_REPORTS_BY_PATH = LINT_REPORT ? buildLintReportMap(LINT_REPORT) : nul
 const SOFT_FAIL = process.env.SOFT_FAIL === '1';
 const BUILD_REPORT_PATH = resolveBuildReportPath(process.env.BUILD_REPORT_PATH);
 const BUILD_WARNINGS = [];
+const INDEX_CACHE_PATH = path.join(ROOT, 'temp', 'index.json');
+const INDEX_CACHE_VERSION = 1;
+const INCREMENTAL = isTruthy(process.env.INCREMENTAL);
 
 const ARTICLE_TEMPLATE = resolveTemplatePath('article.html');
 const INDEX_TEMPLATE = resolveTemplatePath('summary-index.html');
@@ -110,20 +113,176 @@ const MONTH_NAMES = [
   'December'
 ];
 
+function isTruthy(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase());
+}
+
 function main() {
   if (fs.existsSync(CONFIG_PATH)) {
     recordBuildWarning('site-config.json is ignored; move settings into content/site.json.');
   }
   const articles = discoverArticles(INSTANCE_ROOT);
-  const index = buildIndex(articles);
+  const inputSignatures = collectInputSignatures();
+  const cache = loadIndexCache(INDEX_CACHE_PATH);
+  const cacheMatches = cache
+    && cache.version === INDEX_CACHE_VERSION
+    && cache.inputs
+    && cache.inputs.signature === inputSignatures.signature;
+  const useCache = INCREMENTAL && cacheMatches;
+  if (INCREMENTAL && !useCache) {
+    recordBuildWarning('Incremental cache unavailable; falling back to a full rebuild.');
+  }
+
+  const { index, changes, cache: nextCache } = buildIndex(articles, {
+    cache,
+    useCache,
+    trackChanges: INCREMENTAL && useCache,
+    inputs: inputSignatures
+  });
   const queries = loadQueries(QUERIES_PATH);
   const queryResults = executeQueries(index, queries);
-  renderSite(index, queryResults);
+  if (INCREMENTAL && useCache) {
+    renderSiteIncremental(index, queryResults, changes);
+  } else {
+    renderSite(index, queryResults);
+  }
   writeCname();
   copyStaticAssets();
-  copyAssets(index);
+  if (INCREMENTAL && useCache) {
+    copyAssetsIncremental(index, changes);
+  } else {
+    copyAssets(index);
+  }
+  writeIndexCache(INDEX_CACHE_PATH, nextCache);
   writeBuildReport();
   flushBuildWarnings();
+}
+
+function loadIndexCache(filePath) {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || parsed.version !== INDEX_CACHE_VERSION) {
+      return null;
+    }
+    if (!parsed.articles || typeof parsed.articles !== 'object') {
+      return null;
+    }
+    return parsed;
+  } catch (error) {
+    recordBuildWarning(`Failed to read incremental cache at ${filePath}.`);
+    return null;
+  }
+}
+
+function writeIndexCache(filePath, cache) {
+  if (!cache) {
+    return;
+  }
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, `${JSON.stringify(cache, null, 2)}\n`);
+}
+
+function collectInputSignatures() {
+  const templateFiles = listFilesRecursive(INSTANCE_TEMPLATES_DIR);
+  const configFiles = [
+    INSTANCE_SITE_PATH,
+    INSTANCE_QUERIES_PATH,
+    path.join(INSTANCE_ROOT, 'meta.json')
+  ];
+  const signature = buildInputSignature([...templateFiles, ...configFiles]);
+  return {
+    signature,
+    templates: buildInputSignature(templateFiles),
+    config: buildInputSignature(configFiles)
+  };
+}
+
+function buildInputSignature(paths) {
+  const entries = paths
+    .map((entry) => String(entry))
+    .sort()
+    .map((filePath) => {
+      if (!fs.existsSync(filePath)) {
+        return `${filePath}:missing`;
+      }
+      const stats = fs.statSync(filePath);
+      return `${filePath}:${stats.size}:${stats.mtimeMs}`;
+    });
+  return entries.join('|');
+}
+
+function listFilesRecursive(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    return [];
+  }
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...listFilesRecursive(fullPath));
+    } else if (entry.isFile()) {
+      files.push(fullPath);
+    }
+  }
+  return files.sort();
+}
+
+function buildArticleSignature(filePath) {
+  const stats = fs.statSync(filePath);
+  return { size: stats.size, mtimeMs: stats.mtimeMs };
+}
+
+function signaturesMatch(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+  return left.size === right.size && left.mtimeMs === right.mtimeMs;
+}
+
+function cloneFrontmatter(frontmatter) {
+  if (!frontmatter || typeof frontmatter !== 'object') {
+    return frontmatter;
+  }
+  const clone = { ...frontmatter };
+  if (Array.isArray(clone.tags)) {
+    clone.tags = [...clone.tags];
+  }
+  return clone;
+}
+
+function buildIndexEntry(record, frontmatter) {
+  return {
+    ...record,
+    yearNum: Number(record.year),
+    monthNum: Number(record.month),
+    dayNum: Number(record.day),
+    ordinalNum: Number(record.ordinal),
+    publicPath: `/${record.relDir}/`,
+    frontmatter
+  };
+}
+
+function buildCachedEntry(cached) {
+  if (!cached || !cached.record) {
+    return null;
+  }
+  const record = cached.record;
+  const dir = path.join(ROOT, record.relDir);
+  return buildIndexEntry({
+    year: record.year,
+    month: record.month,
+    day: record.day,
+    ordinal: record.ordinal,
+    slug: record.slug,
+    relDir: record.relDir,
+    dir,
+    mdPath: path.join(dir, 'article.md')
+  }, cached.frontmatter);
 }
 
 function normalizeBasePath(raw) {
@@ -492,25 +651,51 @@ function discoverArticles(rootDir) {
   return records;
 }
 
-function buildIndex(records) {
+function buildIndex(records, options = {}) {
   const errors = [];
   const index = [];
+  const changes = {
+    changed: new Map(),
+    removed: new Map()
+  };
+  const useCache = Boolean(options.useCache && options.cache && options.cache.articles);
+  const cachedArticles = useCache ? options.cache.articles : {};
+  const trackChanges = Boolean(options.trackChanges && useCache);
+  const nextCache = {
+    version: INDEX_CACHE_VERSION,
+    generatedAt: new Date().toISOString(),
+    inputs: options.inputs || null,
+    articles: {}
+  };
+  const seen = new Set();
 
   for (const record of records) {
-    const raw = fs.readFileSync(record.mdPath, 'utf8');
-    const parsed = parseFrontmatter(raw);
-
+    seen.add(record.relDir);
+    const cached = cachedArticles[record.relDir];
+    const signature = buildArticleSignature(record.mdPath);
     let frontmatter = null;
-    if (!parsed) {
-      if (SOFT_FAIL) {
-        recordBuildWarning(`Missing frontmatter in ${record.relDir}/article.md (defaulting to draft)`);
-        frontmatter = { status: 'draft' };
+    let parsed = false;
+
+    if (useCache && cached && signaturesMatch(cached.signature, signature)) {
+      frontmatter = cloneFrontmatter(cached.frontmatter);
+    }
+
+    if (!frontmatter) {
+      const raw = fs.readFileSync(record.mdPath, 'utf8');
+      const parsedResult = parseFrontmatter(raw);
+      parsed = true;
+
+      if (!parsedResult) {
+        if (SOFT_FAIL) {
+          recordBuildWarning(`Missing frontmatter in ${record.relDir}/article.md (defaulting to draft)`);
+          frontmatter = { status: 'draft' };
+        } else {
+          errors.push(`Missing frontmatter in ${record.relDir}/article.md`);
+          continue;
+        }
       } else {
-        errors.push(`Missing frontmatter in ${record.relDir}/article.md`);
-        continue;
+        frontmatter = parsedResult.frontmatter;
       }
-    } else {
-      frontmatter = parsed.frontmatter;
     }
 
     if (!frontmatter.status || !STATUS_VALUES.has(frontmatter.status)) {
@@ -571,22 +756,43 @@ function buildIndex(records) {
       }
     }
 
-    index.push({
-      ...record,
-      yearNum: Number(record.year),
-      monthNum: Number(record.month),
-      dayNum: Number(record.day),
-      ordinalNum: Number(record.ordinal),
-      publicPath: `/${record.relDir}/`,
-      frontmatter
-    });
+    const entry = buildIndexEntry(record, frontmatter);
+    index.push(entry);
+
+    nextCache.articles[record.relDir] = {
+      signature,
+      frontmatter,
+      record: {
+        year: record.year,
+        month: record.month,
+        day: record.day,
+        ordinal: record.ordinal,
+        slug: record.slug,
+        relDir: record.relDir
+      }
+    };
+
+    if (trackChanges) {
+      const oldEntry = cached ? buildCachedEntry(cached) : null;
+      if (!cached || parsed) {
+        changes.changed.set(record.relDir, { oldEntry, newEntry: entry });
+      }
+    }
+  }
+
+  if (trackChanges) {
+    for (const [relDir, cached] of Object.entries(cachedArticles)) {
+      if (!seen.has(relDir)) {
+        changes.removed.set(relDir, { oldEntry: buildCachedEntry(cached) });
+      }
+    }
   }
 
   if (errors.length) {
     handleBuildErrors(errors, 'Frontmatter');
   }
 
-  return index;
+  return { index, changes, cache: nextCache };
 }
 
 function loadQueries(filePath) {
@@ -803,6 +1009,163 @@ function renderSite(index, queryResults) {
   writeRobots();
 }
 
+function renderSiteIncremental(index, queryResults, changes) {
+  ensureDir(OUTPUT_DIR);
+
+  const published = queryResults['all-published-posts']
+    ? queryResults['all-published-posts'].slice()
+    : index.filter((item) => item.frontmatter.status === 'published').sort(makeSortFn('date-asc'));
+
+  const indexTemplate = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
+  const homeBody = buildArticleListSection('latest-posts');
+  const homeExtra = buildYearListSection(published, ARCHIVE_ROOT_PATH, 'Years');
+  const renderQueries = LINT_REPORTS_BY_PATH
+    ? {
+        ...queryResults,
+        'latest-posts': sortItems(
+          index.filter((item) => item.frontmatter.status !== 'archived'),
+          'date-desc'
+        ).slice(0, 25)
+      }
+    : queryResults;
+  const homeHtml = renderTemplate(
+    applySlots(
+      applyMeta(indexTemplate, {
+        canonical: joinUrl(SITE_URL, '/'),
+        description: SITE_DESCRIPTION,
+        title: 'Home'
+      }),
+      {
+        'page-heading': '',
+        'page-intro': '',
+        'page-body': homeBody,
+        'page-extra': homeExtra
+      }
+    ),
+    renderQueries
+  );
+  writeFile(path.join(OUTPUT_DIR, 'index.html'), homeHtml);
+
+  if (fs.existsSync(ABOUT_TEMPLATE)) {
+    const aboutTemplate = fs.readFileSync(ABOUT_TEMPLATE, 'utf8');
+    const aboutHtml = renderTemplate(
+      applySlots(
+        applyMeta(aboutTemplate, {
+          canonical: joinUrl(SITE_URL, '/about/'),
+          description: SITE_DESCRIPTION,
+          title: 'About'
+        }),
+        {
+          'page-title': escapeHtml(composePageTitle('About'))
+        }
+      ),
+      queryResults
+    );
+    writeFile(path.join(OUTPUT_DIR, 'about', 'index.html'), aboutHtml);
+  }
+
+  const articleTemplate = fs.readFileSync(ARTICLE_TEMPLATE, 'utf8');
+  const articleCandidates = LINT_REPORTS_BY_PATH
+    ? index
+    : (queryResults['article-pages'] || []);
+  const changedRelDirs = new Set(changes.changed.keys());
+
+  for (const article of articleCandidates) {
+    if (!changedRelDirs.has(article.relDir)) {
+      continue;
+    }
+    const perArticleResults = { 'article-page': [article] };
+    const articleTitle = articleMetaTitle(article);
+    const articleHtml = renderTemplate(
+      applySlots(
+        applyMeta(articleTemplate, {
+          canonical: joinUrl(SITE_URL, article.publicPath),
+          description: descriptionForArticle(article),
+          title: articleTitle,
+          ogType: 'article',
+          image: articleOgImage(article),
+          publishedTime: articlePublishedTime(article),
+          section: article.frontmatter.series || null,
+          tags: article.frontmatter.tags || []
+        }),
+        {
+          'page-title': escapeHtml(composePageTitle(articleTitle))
+        }
+      ),
+      perArticleResults
+    );
+    writeFile(path.join(OUTPUT_DIR, article.relDir, 'index.html'), articleHtml);
+  }
+
+  for (const [relDir] of changes.removed.entries()) {
+    removeDir(path.join(OUTPUT_DIR, relDir));
+  }
+
+  const hasChanges = changes.changed.size > 0 || changes.removed.size > 0;
+  if (!hasChanges) {
+    return;
+  }
+
+  const affected = collectAffectedSets(changes);
+  renderArchiveRoot(published);
+
+  if (affected.years.size) {
+    renderYearArchives(published, affected.years);
+  }
+  if (affected.months.size) {
+    renderMonthArchives(published, affected.months);
+  }
+  if (affected.tags.size) {
+    renderTagArchives(published, affected.tags);
+    renderTagFeeds(published, affected.tags);
+    renderTagIndex(queryResults);
+  }
+  if (affected.series.size) {
+    renderSeriesArchives(published, affected.series);
+    renderSeriesFeeds(published, affected.series);
+    renderSeriesIndex(published);
+  }
+
+  renderLintIndex(index);
+  renderFeed(queryResults, published);
+  writeSitemap(published);
+  writeRobots();
+}
+
+function collectAffectedSets(changes) {
+  const affected = {
+    years: new Set(),
+    months: new Set(),
+    tags: new Set(),
+    series: new Set()
+  };
+
+  const addPublished = (entry) => {
+    if (!entry || !entry.frontmatter || entry.frontmatter.status !== 'published') {
+      return;
+    }
+    affected.years.add(entry.year);
+    affected.months.add(`${entry.year}-${entry.month}`);
+    const tags = entry.frontmatter.tags || [];
+    for (const tag of tags) {
+      affected.tags.add(tag);
+    }
+    if (entry.frontmatter.series) {
+      affected.series.add(entry.frontmatter.series);
+    }
+  };
+
+  for (const { oldEntry, newEntry } of changes.changed.values()) {
+    addPublished(oldEntry);
+    addPublished(newEntry);
+  }
+  for (const { oldEntry } of changes.removed.values()) {
+    addPublished(oldEntry);
+  }
+
+  return affected;
+}
+
 
 function renderFeed(queryResults, published) {
   const items = queryResults['latest-posts']
@@ -820,13 +1183,18 @@ function renderFeed(queryResults, published) {
   writeFile(FEED_PATH, feed);
 }
 
-function renderTagFeeds(published) {
+function renderTagFeeds(published, targetTags = null) {
   const tagMap = groupBy(published.flatMap((article) => {
     const tags = article.frontmatter.tags || [];
     return tags.map((tag) => ({ tag, article }));
   }), (entry) => entry.tag);
 
-  for (const [tag, entries] of tagMap.entries()) {
+  const tags = targetTags ? Array.from(targetTags).sort() : Array.from(tagMap.keys()).sort();
+  for (const tag of tags) {
+    const entries = tagMap.get(tag);
+    if (!entries) {
+      continue;
+    }
     const items = entries.map((entry) => entry.article).sort(makeSortFn('date-desc'));
     const feed = buildFeedXml({
       title: `Tag: ${tag} - ${SITE_NAME}`,
@@ -839,13 +1207,20 @@ function renderTagFeeds(published) {
   }
 }
 
-function renderSeriesFeeds(published) {
+function renderSeriesFeeds(published, targetSeries = null) {
   const seriesMap = groupBy(
     published.filter((item) => item.frontmatter.series),
     (item) => item.frontmatter.series
   );
+  const seriesNames = targetSeries
+    ? Array.from(targetSeries).sort()
+    : Array.from(seriesMap.keys()).sort();
 
-  for (const [series, items] of seriesMap.entries()) {
+  for (const series of seriesNames) {
+    const items = seriesMap.get(series);
+    if (!items) {
+      continue;
+    }
     const ordered = items.slice().sort(makeSortFn('date-asc'));
     const feed = buildFeedXml({
       title: `Series: ${series} - ${SITE_NAME}`,
@@ -1151,6 +1526,21 @@ function copyAssets(index) {
   }
 }
 
+function copyAssetsIncremental(index, changes) {
+  const changedRelDirs = new Set(changes.changed.keys());
+  for (const article of index) {
+    if (!changedRelDirs.has(article.relDir)) {
+      continue;
+    }
+    const assetsDir = path.join(article.dir, 'assets');
+    if (!fs.existsSync(assetsDir)) {
+      continue;
+    }
+    const destDir = path.join(OUTPUT_DIR, article.relDir, 'assets');
+    copyDir(assetsDir, destDir);
+  }
+}
+
 function copyStaticAssets() {
   const destDir = path.join(OUTPUT_DIR, 'assets');
   if (fs.existsSync(INSTANCE_ASSETS_DIR)) {
@@ -1240,12 +1630,26 @@ function buildHeading(text, level = 1) {
   return `<h${level}>${safeText}</h${level}>`;
 }
 
-function renderYearArchives(published) {
+function renderYearArchives(published, targetYears = null) {
   const template = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const byYear = groupBy(published, (item) => item.year);
-  const years = Array.from(byYear.keys()).sort((a, b) => Number(b) - Number(a));
+  const availableYears = Array.from(byYear.keys()).sort((a, b) => Number(b) - Number(a));
+  const years = targetYears
+    ? Array.from(targetYears).sort((a, b) => Number(b) - Number(a))
+    : availableYears;
+
+  if (targetYears) {
+    for (const year of targetYears) {
+      if (!byYear.has(year)) {
+        removeDir(path.join(ARCHIVE_OUTPUT_ROOT, year));
+      }
+    }
+  }
 
   for (const year of years) {
+    if (!byYear.has(year)) {
+      continue;
+    }
     const yearItems = sortItems(byYear.get(year), 'date-asc');
     const byMonth = groupBy(yearItems, (item) => item.month);
     const months = Array.from(byMonth.keys()).sort((a, b) => Number(a) - Number(b));
@@ -1291,12 +1695,27 @@ function renderYearArchives(published) {
   }
 }
 
-function renderMonthArchives(published) {
+function renderMonthArchives(published, targetMonths = null) {
   const template = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const byMonth = groupBy(published, (item) => `${item.year}-${item.month}`);
-  const keys = Array.from(byMonth.keys()).sort((a, b) => b.localeCompare(a));
+  const availableKeys = Array.from(byMonth.keys()).sort((a, b) => b.localeCompare(a));
+  const keys = targetMonths
+    ? Array.from(targetMonths).sort((a, b) => b.localeCompare(a))
+    : availableKeys;
+
+  if (targetMonths) {
+    for (const key of targetMonths) {
+      if (!byMonth.has(key)) {
+        const [year, month] = key.split('-');
+        removeDir(path.join(ARCHIVE_OUTPUT_ROOT, year, month));
+      }
+    }
+  }
 
   for (const key of keys) {
+    if (!byMonth.has(key)) {
+      continue;
+    }
     const [year, month] = key.split('-');
     const monthItems = sortItems(byMonth.get(key), 'date-asc');
     const label = `${monthName(month)} ${year}`;
@@ -1324,7 +1743,7 @@ function renderMonthArchives(published) {
   }
 }
 
-function renderTagArchives(published) {
+function renderTagArchives(published, targetTags = null) {
   const template = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const tagMap = new Map();
 
@@ -1342,9 +1761,14 @@ function renderTagArchives(published) {
     }
   }
 
-  const tags = Array.from(tagMap.keys()).sort();
+  const tags = targetTags ? Array.from(targetTags).sort() : Array.from(tagMap.keys()).sort();
   for (const tag of tags) {
     const items = tagMap.get(tag);
+    if (!items) {
+      removeDir(path.join(OUTPUT_DIR, 'tags', tag));
+      continue;
+    }
+    removeDir(path.join(OUTPUT_DIR, 'tags', tag));
     const itemsDesc = sortItems(items, 'date-desc');
     const latest = itemsDesc.slice(0, 25);
     const yearCounts = countBy(items, (item) => item.year);
@@ -1437,13 +1861,20 @@ function renderTagIndex(queryResults) {
   writeFile(path.join(OUTPUT_DIR, 'tags', 'index.html'), html);
 }
 
-function renderSeriesArchives(published) {
+function renderSeriesArchives(published, targetSeries = null) {
   const template = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const seriesMap = groupBy(published.filter((item) => item.frontmatter.series), (item) => item.frontmatter.series);
-  const seriesNames = Array.from(seriesMap.keys()).sort();
+  const seriesNames = targetSeries
+    ? Array.from(targetSeries).sort()
+    : Array.from(seriesMap.keys()).sort();
 
   for (const series of seriesNames) {
     const seriesItems = seriesMap.get(series);
+    if (!seriesItems) {
+      removeDir(path.join(OUTPUT_DIR, 'series', series));
+      continue;
+    }
+    removeDir(path.join(OUTPUT_DIR, 'series', series));
     const itemsDesc = sortItems(seriesItems, 'date-desc');
     const latest = itemsDesc.slice(0, 25);
     const latestAsc = sortItems(latest, 'date-asc');
@@ -2465,6 +2896,12 @@ function parseAttributes(attrText) {
 }
 
 function cleanDir(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    fs.rmSync(dirPath, { recursive: true, force: true });
+  }
+}
+
+function removeDir(dirPath) {
   if (fs.existsSync(dirPath)) {
     fs.rmSync(dirPath, { recursive: true, force: true });
   }

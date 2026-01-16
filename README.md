@@ -10,7 +10,11 @@ If `/content/` does not exist, the build uses `/example/` as the live instance. 
 
 Install Node.js from the official site: https://nodejs.org/en
 
+Install git. On Windows, use Git for Windows: https://gitforwindows.org/
+
 The dev server uses `nodemon` for file watching, and it is installed as a dev dependency when you run `npm install`.
+
+Windows note: if you see path length errors on Windows, enable long paths in system settings and restart your shell.
 
 ## Create a new blog from scratch
 
@@ -51,6 +55,18 @@ If you run setup again after you have content, it will skip the copy and leave y
 ```sh
 npm start
 ```
+
+## Local workflow
+
+Most people will keep a dev server terminal open and let it rebuild on change, while they author content through their editor or AI assistant. When the site looks correct and lint warnings are acceptable, publish with:
+
+```sh
+npm run publish
+```
+
+This runs lint and blocks only on high-severity issues, then stages all changes, commits with a default message, and pushes to your remote. It keeps git out of the day-to-day loop after initial setup.
+
+For a full walkthrough of the two-window authoring loop, see [docs/workflow.md](docs/workflow.md).
 
 ## Where your site lives
 
