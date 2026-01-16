@@ -33,6 +33,7 @@ Add a basic `.gitignore` so build output and dependencies do not end up in Git.
 cat <<'EOF' > .gitignore
 /build/
 /node_modules/
+/temp/
 EOF
 ```
 
