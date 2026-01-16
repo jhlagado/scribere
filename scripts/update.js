@@ -2,9 +2,8 @@
 "use strict";
 
 const { spawnSync } = require("node:child_process");
-const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = process.cwd();
 
 const runGit = (args, options = {}) => {
   const result = spawnSync("git", args, {

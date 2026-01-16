@@ -2,6 +2,17 @@
 
 This tutorial starts from an empty repository and ends with a live blog on GitHub Pages. It assumes you want engine updates without inheriting someone else’s content. The key idea is simple: the engine lives in the root, while your site lives under `content/`.
 
+## Before you start
+
+You need Node.js and git.
+
+- Node.js: https://nodejs.org/en (use the LTS release)
+- Git:
+  - macOS: `xcode-select --install` (or `brew install git`)
+  - Linux (Debian/Ubuntu): `sudo apt install git`
+  - Linux (Fedora): `sudo dnf install git`
+  - Windows: https://gitforwindows.org/
+
 ## 1. Create an empty repo
 
 Create a new repository on GitHub. Leave it empty. You will pull the Scribere engine into it next.

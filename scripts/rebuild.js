@@ -5,12 +5,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const ROOT = path.resolve(__dirname, "..");
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const ROOT = process.cwd();
+const SCRIBERE_ROOT = path.resolve(__dirname, "..");
+const buildScript = path.join(SCRIBERE_ROOT, "scripts", "build.js");
 
 fs.rmSync(path.join(ROOT, "temp", "index.json"), { force: true });
 
-const result = spawnSync(npmCmd, ["run", "-s", "build"], {
+const result = spawnSync(process.execPath, [buildScript], {
   stdio: "inherit",
   cwd: ROOT,
 });

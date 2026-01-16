@@ -4,8 +4,9 @@
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, "..");
-const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const ROOT = process.cwd();
+const SCRIBERE_ROOT = path.resolve(__dirname, "..");
+const lintScript = path.join(SCRIBERE_ROOT, "scripts", "prose-lint.js");
 
 const runGit = (args, options = {}) => {
   const result = spawnSync("git", args, {
@@ -24,12 +25,9 @@ const runGit = (args, options = {}) => {
 };
 
 const lintResult = spawnSync(
-  npmCmd,
+  process.execPath,
   [
-    "run",
-    "-s",
-    "lint",
-    "--",
+    lintScript,
     "--all",
     "--gate",
     "--max-high=0",

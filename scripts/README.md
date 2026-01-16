@@ -1,6 +1,6 @@
 # Local Scripts
 
-These scripts are intended for local use and are not part of CI. They are implemented in Node so the same commands work on macOS, Linux, and Windows. Node.js is required, and dev tools like `nodemon` are installed with `npm install`.
+These scripts are intended for local use and are not part of CI. They are implemented in Node so the same commands work on macOS, Linux, and Windows. Node.js is required, and tools like `nodemon` are installed with `npm install`.
 
 Node.js is required to run the scripts in this folder. Install it globally using your preferred method. Two common options are:
 
@@ -96,3 +96,11 @@ npm run lint -- --all --strict
 ```
 
 When the dev build emits warnings or lint issues, it also writes `temp/build-report.json` with the combined warnings and lint report. This gives the preview UI one place to read diagnostics without stopping the server.
+
+## Lint code
+
+```sh
+npm run lint:code
+```
+
+This runs ESLint over the engine scripts and flags unused or undefined symbols.
