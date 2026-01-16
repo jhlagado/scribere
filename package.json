@@ -1,15 +1,6 @@
 {
   "name": "scribere",
   "private": true,
-  "bin": {
-    "scribere-start": "scripts/start.js",
-    "scribere-build": "scripts/build.js",
-    "scribere-rebuild": "scripts/rebuild.js",
-    "scribere-lint": "scripts/prose-lint.js",
-    "scribere-update": "scripts/update.js",
-    "scribere-publish": "scripts/publish.js",
-    "scribere-setup": "scripts/setup.js"
-  },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
