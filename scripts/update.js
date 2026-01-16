@@ -2,6 +2,8 @@
 "use strict";
 
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const ROOT = process.cwd();
 
@@ -37,6 +39,34 @@ if (status.status !== 0) {
 if ((status.stdout || "").trim()) {
   console.error("[update] working tree is not clean. Commit or stash changes first.");
   process.exit(1);
+}
+
+const packageJsonPath = path.join(ROOT, "package.json");
+let usesScribereDependency = false;
+
+if (fs.existsSync(packageJsonPath)) {
+  const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+  usesScribereDependency =
+    Boolean(pkg.dependencies && pkg.dependencies.scribere) ||
+    Boolean(pkg.devDependencies && pkg.devDependencies.scribere);
+}
+
+if (usesScribereDependency) {
+  const npmResult = spawnSync(
+    "npm",
+    ["install", "scribere@git+https://github.com/jhlagado/scribere.git"],
+    { stdio: "inherit", cwd: ROOT }
+  );
+
+  if (npmResult.error) {
+    throw npmResult.error;
+  }
+
+  if (npmResult.status !== 0) {
+    process.exit(npmResult.status ?? 1);
+  }
+
+  process.exit(0);
 }
 
 const checkUpstream = spawnSync("git", ["remote", "get-url", "upstream"], {
