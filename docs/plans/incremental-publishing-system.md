@@ -1,318 +1,60 @@
 # Incremental Publishing System
 
-## 1. Introduction
+## 1. Purpose
 
-### 1.1 Purpose of the Document
+This document is the upstream source of truth for Scribere’s incremental build behaviour. It defines how the dev server stays responsive with large archives while CI remains deterministic and publish‑only. Any script changes that affect incremental behaviour should be reflected here first, so downstream sites can pull updates with confidence.
 
-This document defines the design, operating principles, and practical implementation of an incremental publishing system intended for long-lived, high-volume content archives.
+The system keeps the filesystem as the source of truth. Nothing in the build pipeline is allowed to supersede the Markdown articles or their frontmatter. The cache exists only to avoid re‑parsing the whole archive on every keystroke.
 
-The primary goal is to make publishing scalable, deterministic, and automatable, even when the total number of articles grows into the tens of thousands. Instead of rebuilding the entire site for every small change, the system rebuilds only what has actually been modified.
+## 2. Core model
 
-The document exists to support three audiences:
+Local development and CI have different goals, so they use different strategies. Local development optimises for immediacy and visibility, including drafts and lint warnings. CI optimises for repeatability, publishing only what is committed and marked `published`. The build script supports both by using a disposable cache for local runs and a full scan for CI.
 
-- Humans maintaining the publishing pipeline
-- AI agents that create, update, and manage content
-- Build systems that must produce consistent, verifiable output
+This model deliberately avoids a change journal. The earlier idea of journalling changes conflicts with the rule that Markdown is the source of truth and creates a second authoritative layer. The system instead uses file change events and a cache that can be deleted at any time.
 
-The system is designed so that each of these actors can do its job without requiring global knowledge of the entire archive.
+## 3. Local development flow
 
----
+Local development uses nodemon to trigger rebuilds and the build script to decide what to re‑parse. The dev loop runs with `INCREMENTAL=1` and `SOFT_FAIL=1`, which keeps the preview usable while showing draft and lint issues above the affected articles. The cache lives at `temp/index.json` and stores per‑article signatures and derived metadata.
 
-### 1.2 Importance of Incremental Publishing
+On each change, the build:
 
-Traditional static-site publishing pipelines rely on full rebuilds. This is workable when there are dozens of files, but becomes untenable when there are thousands or tens of thousands.
+1. Compares article signatures against the cache.
+2. Re‑parses only the changed articles.
+3. Rebuilds those article pages and the index pages they affect.
+4. Rewrites the cache for the next run.
 
-Full rebuilds cause:
+If the cache is missing or invalid, the build falls back to a full scan and records a warning. The cache never replaces source content and can be safely deleted at any time.
 
-- Long build times
-- Increased failure risk
-- High resource usage
-- Poor suitability for AI-driven workflows
+## 4. CI flow
 
-Incremental publishing replaces global recomputation with targeted updates. If only one article changes, only that article and the indexes it affects should be touched. Everything else remains unchanged.
+CI builds from the commit tree. It does not use the incremental cache and does not include drafts or lint‑failing articles unless explicitly requested. It can rebuild everything on each run because CI is a batch job and prioritises determinism over speed.
 
-This allows:
+If incremental CI is ever needed, it should use git diffs between commits to calculate the affected articles and rerun the same incremental rules as the dev server. That mode remains optional; full builds remain the default.
 
-- Near-instant builds
-- Low energy use
-- Predictable CI behavior
-- AI agents to operate safely and repeatedly without causing runaway work
+## 5. Incremental rebuild rules
 
----
+Incremental rebuilds must be conservative and correct. For each changed article, the build re‑renders:
 
-## 2. System Overview
+- the article page itself
+- any tag, series, year, month, or archive page that would include it
+- feeds and tag/series feed pages that include it
 
-### 2.1 High-Level Architecture
+If metadata changes, index membership can shift, so both the old and new index targets must be rebuilt. This is why the cache stores frontmatter values alongside the signature.
 
-The system is intentionally split into three cooperating components:
+## 6. Cache design
 
-1. **AI Content Manager**
-2. **Change Journal**
-3. **Build Script**
+The cache is a JSON file with a version stamp, input signatures, and per‑article entries. Each entry stores the article’s mtime and size signature plus the derived frontmatter fields needed to compute index membership. It does not store the article body and it does not store rendered HTML.
 
-Each has a clearly defined role.
+The cache is disposable. If it is missing, corrupted, or out of date, the build performs a full scan and regenerates it. This keeps the system safe when templates or queries change.
 
-The AI is responsible for *intent* (what should exist).  
-The journal is responsible for *record* (what changed).  
-The build system is responsible for *materialization* (what becomes public output).
+## 7. Failure and recovery
 
-No component is allowed to collapse into another.
+The build should degrade safely when data is missing or malformed. Missing frontmatter fields should be defaulted to draft during local development, and hard errors should be reserved for CI. When the build cannot determine a safe incremental update, it should fall back to a full scan rather than produce an incomplete output.
 
----
+## 8. Implementation plan
 
-### 2.2 Key Components
+Stage 1 is already in place. Local dev uses `INCREMENTAL=1`, writes `temp/index.json`, and rebuilds only what changes. `npm run rebuild` clears the cache and forces a full scan.
 
-#### AI Content Manager
+Stage 2 can add explicit file‑path awareness. A small watcher wrapper can pass changed paths into the build for even less scanning. This is optional and should keep behaviour identical.
 
-The AI Content Manager creates and edits articles. It is responsible for:
-
-- Writing or modifying Markdown files
-- Assigning metadata such as title, tags, and status
-- Recording every change into the Change Journal
-
-The AI never touches indexes, HTML, or output files directly.
-
-It only mutates **content** and **journal entries**.
-
-This constraint is critical to prevent accidental corruption of the publishing surface.
-
----
-
-#### Change Journal
-
-The Change Journal is an append-only structured log. Every content mutation produces a journal entry.
-
-Each entry records:
-
-- The article path
-- The type of operation (create, update, unpublish, etc.)
-- Whether metadata changed
-- Whether status changed
-- A timestamp or sequence number
-
-The journal is the *only* input the build script uses to decide what needs to be rebuilt.
-
-It acts as the contract between the AI and the build system.
-
----
-
-#### Build Script
-
-The build script:
-
-- Reads the Change Journal
-- Determines which articles and indexes are affected
-- Rebuilds only those outputs
-- Leaves everything else untouched
-
-It does not infer changes by scanning the filesystem.  
-It does not guess what might have changed.  
-It obeys the journal.
-
-This makes the build deterministic, reproducible, and testable.
-
----
-
-## 3. Content Status Management
-
-### 3.1 Managing Statuses
-
-Each article has exactly one of the following states:
-
-- **Draft**
-- **Published**
-- **Unpublished**
-
-These states determine visibility and indexing behavior.
-
-They do **not** determine whether the file exists on disk.
-
----
-
-### 3.2 State Definitions
-
-**Draft**
-
-- Exists only for the author or AI
-- Not visible on the public site
-- Not included in any index
-- May be freely edited without public impact
-
-**Published**
-
-- Fully visible
-- Appears in tag indexes, archives, feeds, and navigation
-- Treated as canonical public content
-
-**Unpublished**
-
-- Was once published
-- Now removed from all public indexes
-- Content remains on disk
-- Permalink may resolve to a placeholder or blank page
-
-Unpublished is not deletion — it is reversible withdrawal.
-
----
-
-### 3.3 Impact of Status Changes
-
-When an article changes status, only index membership changes — not the article itself.
-
-Examples:
-
-- Draft → Published  
-  The article is inserted into all relevant indexes.
-
-- Published → Unpublished  
-  The article is removed from all indexes, but the file remains.
-
-- Unpublished → Published  
-  The article is re-inserted into indexes.
-
-These transitions are journaled and processed incrementally.
-
----
-
-### 3.4 Best Practices
-
-- Avoid flipping states back and forth
-- Treat status changes as meaningful publishing events
-- Use Draft and Unpublished instead of deleting files
-
-This keeps the archive stable and auditable.
-
----
-
-## 4. Incremental Publishing Workflow
-
-### 4.1 Create Operations
-
-When a new article is created:
-
-1. The AI writes the Markdown file
-2. The AI writes a Change Journal entry of type `create`
-3. The build script:
-   - Renders the article
-   - Inserts it into relevant indexes
-
-No full scan is required.
-
----
-
-### 4.2 Update Operations
-
-Updates fall into two classes.
-
-**Content-Only Updates**
-
-- Body text changes
-- No metadata change
-- No index update required
-
-Only the article's HTML is re-rendered.
-
-**Metadata Updates**
-
-- Title change
-- Tag change
-- Category change
-- Status change
-
-These require index adjustments.
-
-The journal entry marks the change type so the build script knows whether index updates are required.
-
----
-
-### 4.3 Unpublish Operations
-
-Unpublishing produces a journal entry.
-
-The build script:
-
-- Removes the article from all indexes
-- Writes a placeholder or empty output page
-
-The Markdown file remains untouched.
-
----
-
-### 4.4 Best Practices
-
-- Separate content edits from metadata edits
-- Avoid unnecessary metadata churn
-- Let the journal drive all rebuilds
-
----
-
-## 5. Index Management
-
-### 5.1 Incremental Index Updates
-
-Indexes (tag lists, archives, feeds) are maintained by applying journal entries.
-
-For each journal entry:
-
-- If a new article appears → append to indexes
-- If metadata changes → move or reclassify in indexes
-- If unpublished → remove from indexes
-
-Indexes never require full recomputation unless a catastrophic error occurs.
-
----
-
-### 5.2 Deletion vs Unpublishing
-
-Deletion removes files and requires full reconciliation.
-
-Unpublishing simply changes visibility.
-
-Therefore:
-
-- Unpublishing is preferred
-- Deletion should be rare and manual
-
----
-
-### 5.3 Consistency Guarantees
-
-The journal ensures:
-
-- No orphaned index entries
-- No missing references
-- No accidental duplicates
-
-The build system never trusts the filesystem — only the journal.
-
----
-
-## 6. Conclusion
-
-### 6.1 Summary of Best Practices
-
-A robust incremental publishing system is built on:
-
-- A strict separation between content, change tracking, and output
-- An append-only change journal
-- Deterministic, journal-driven builds
-- Careful management of publication status
-
-This allows AI agents to safely manage enormous archives without destroying performance or correctness.
-
----
-
-### 6.2 Future Considerations
-
-As the archive grows, further enhancements may include:
-
-- Journal compaction
-- Parallel index updates
-- Cached query results
-- Background rebuild workers
-
-None of these change the core principle:
-
-> **Only rebuild what actually changed.**
-
-Everything else is waste.
+Stage 3, if needed, adds optional git‑diff incremental builds for CI. This should remain an opt‑in mode so the default remains a full build.

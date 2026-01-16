@@ -2,10 +2,12 @@
   "name": "scribere",
   "private": true,
   "scripts": {
-    "start": "bash scripts/start.sh",
+    "start": "node scripts/start.js",
     "build": "node scripts/build.js",
+    "rebuild": "node scripts/rebuild.js",
     "lint": "node scripts/prose-lint.js",
-    "update": "bash scripts/update.sh",
+    "update": "node scripts/update.js",
+    "publish": "node scripts/publish.js",
     "setup": "node scripts/setup.js"
   },
   "devDependencies": {
