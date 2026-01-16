@@ -85,6 +85,8 @@ const ROBOTS_PATH = path.join(OUTPUT_DIR, 'robots.txt');
 const STATUS_VALUES = new Set(['draft', 'review', 'published', 'archived']);
 const INTERNAL_QUERY_NAMES = new Set(['article-page']);
 const ALLOWED_CONTENT_ROOT_DIRS = new Set(['assets', 'templates']);
+const MAX_SLUG_LENGTH = 80;
+const MAX_ASSET_NAME_LENGTH = 80;
 const ALLOWED_QUERY_KEYS = new Set([
   'source',
   'status',
@@ -621,11 +623,37 @@ function discoverArticles(rootDir) {
             continue;
           }
 
+          if (slug.length > MAX_SLUG_LENGTH) {
+            const message = `Slug too long (${slug.length}/${MAX_SLUG_LENGTH}) in ${path.join(year, month, day, leaf)}`;
+            if (SOFT_FAIL) {
+              recordBuildWarning(message);
+            } else {
+              errors.push(message);
+            }
+          }
+
           const mdFiles = fs.readdirSync(leafPath)
             .filter((file) => file.toLowerCase().endsWith('.md'));
           if (mdFiles.length !== 1 || mdFiles[0] !== 'article.md') {
             errors.push(`Missing or ambiguous article markdown file in ${path.join(year, month, day, leaf)}`);
             continue;
+          }
+
+          const assetsPath = path.join(leafPath, 'assets');
+          if (fs.existsSync(assetsPath)) {
+            const assetFiles = listFilesRecursive(assetsPath);
+            for (const filePath of assetFiles) {
+              const filename = path.basename(filePath);
+              if (filename.length > MAX_ASSET_NAME_LENGTH) {
+                const relPath = toPosix(path.relative(ROOT, filePath));
+                const message = `Asset name too long (${filename.length}/${MAX_ASSET_NAME_LENGTH}) in ${relPath}`;
+                if (SOFT_FAIL) {
+                  recordBuildWarning(message);
+                } else {
+                  errors.push(message);
+                }
+              }
+            }
           }
 
           const relDir = toPosix(path.relative(ROOT, leafPath));

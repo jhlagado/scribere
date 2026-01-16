@@ -1,6 +1,6 @@
 # Workflow
 
-This system is designed for a two‑window workflow. One terminal runs the dev server in a loop. The other window is where you give instructions to your editor or AI assistant. A third terminal is optional if you want to run one‑off commands, but most people will not need it once setup is done.
+This system is designed for a two‑window workflow. One terminal runs the dev server in a loop. The other window is where you give instructions to your editor or AI assistant and monitor the result. A third terminal is optional if you want to run one‑off commands, but most people will not need it once setup is done.
 
 ## Local development loop
 
@@ -19,6 +19,7 @@ The authoring loop is simple:
 1. Create or edit an article file under `content/`.
 2. Let the dev server rebuild and check the result in your browser.
 3. If there are lint warnings, fix them until you are happy or accept them and move on.
+4. When the AI tells you the article is ready, publish in a separate terminal if needed.
 
 The dev loop does not stop the server when lint warnings appear. It keeps the preview live so the work stays visible.
 
