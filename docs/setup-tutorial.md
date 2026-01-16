@@ -27,6 +27,15 @@ cd my-blog
 git init
 ```
 
+Add a basic `.gitignore` so build output and dependencies do not end up in Git.
+
+```sh
+cat <<'EOF' > .gitignore
+/build/
+/node_modules/
+EOF
+```
+
 ## 3. Add Scribere to your package.json
 
 Create a `package.json` that installs Scribere and exposes the scripts:
@@ -60,6 +69,7 @@ npm run setup
 ```
 
 If `/content/` already exists, the script will stop to avoid overwriting your work.
+If you run setup in a non-interactive shell, it uses the defaults from the example instance. You can update `content/site.json` by hand at any time, or delete `content/` and run setup again.
 
 ## 5. Point the repo at your origin
 
