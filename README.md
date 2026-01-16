@@ -70,10 +70,10 @@ npm run setup
 The setup script copies the bundled `/example/` instance into `content/` and updates `content/site.json` with your details.
 If you run setup again after you have content, it will skip the copy and leave your data untouched.
 
-5) Add your own origin and push the code:
+5) Add your own origin and push the code (HTTPS):
 
 ```sh
-git remote add origin git@github.com:YOUR-USERNAME/YOUR-REPO.git
+git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
 git push -u origin main
 ```
 
