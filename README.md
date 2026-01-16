@@ -2,6 +2,8 @@
 
 Scribere is a small, opinionated blogging engine for people who want to publish plain HTML with a predictable folder structure. The scripts live at the repo root. Each blog instance owns its content, templates, assets, queries, and client‑side JavaScript under `content/`. This split lets you pull engine updates without overwriting your site design.
 
+During active development, instances pull Scribere from GitHub. When the engine stabilises, the plan is to publish it on the npm registry.
+
 The engine ships with an `/example/` instance so you can run it immediately. When you are ready to start your own blog, you copy that example into `content/` using the setup script.
 
 If `/content/` does not exist, the build uses `/example/` as the live instance. This lets the Scribere repo publish its own GitHub Pages site without running setup. As soon as you create `/content/`, the build switches to that instance automatically.
@@ -10,9 +12,16 @@ If `/content/` does not exist, the build uses `/example/` as the live instance. 
 
 Install Node.js from the official site: https://nodejs.org/en
 
-Install git. On Windows, use Git for Windows: https://gitforwindows.org/
+On Windows, `winget` is usually available by default (it ships with the App Installer on Windows 10/11). If you do not have it, install App Installer from the Microsoft Store or use the Node installer directly.
 
-The dev server uses `nodemon` for file watching, and it is installed as a dev dependency when you run `npm install`.
+Install git:
+
+- macOS: `xcode-select --install` (or `brew install git`)
+- Linux (Debian/Ubuntu): `sudo apt install git`
+- Linux (Fedora): `sudo dnf install git`
+- Windows: Git for Windows https://gitforwindows.org/
+
+The dev server uses `nodemon` for file watching, and it is installed when you run `npm install`.
 
 Windows note: if you see path length errors on Windows, enable long paths in system settings and restart your shell.
 

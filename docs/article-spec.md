@@ -14,6 +14,10 @@ The article directory may also contain an `assets/` subfolder for images, code, 
 
 The most critical part of this path is the **NN** ordinal prefix in the leaf directory. This two-digit ordinal prefix (`NN`) ensures that multiple articles created on the same day are sorted correctly by both human-centric tools and automated build scripts, preventing accidental alphabetical sorting of slugs. The leaf directory is named with its human-readable **NN-slug** (e.g., `01-first-post/`). Once an article is assigned to its folder, it remains there for its entire lifecycle; even if the content is revised years later, its birth folder remains its permanent home, preserving its place in history. Each article directory must contain exactly one canonical Markdown body file; missing or ambiguous candidates are build failures.
 
+Slugs should stay concise. The ordinal prefix already guarantees uniqueness, so a long slug adds little value and risks path-length issues on some systems. Keep slugs under 80 characters and keep asset file names under the same limit. The build warns in dev when a slug or asset name exceeds the limit and can be configured to fail in strict builds.
+
+A **slug** is the short, URL‑safe phrase in the folder name after the ordinal. It uses lowercase letters, numbers, and hyphens so the URL stays readable (for example, `01-why-static-sites/`).
+
 ---
 
 ## 2. Constructing the Document
@@ -103,3 +107,17 @@ Reference docs are optimised for long-term lookup. They use objective prose, fre
 ## 4. Authoring Responsibility
 
 Anyone creating or revising a post must maintain the integrity of the Article Unit. The `/NN-slug/` folder structure must be enforced and metadata should remain accurate in frontmatter so the header and footer blocks stay consistent. The body should read as crafted writing rather than a collection of data points.
+
+---
+
+## Glossary (plain language)
+
+- **Slug**: the short, readable phrase used in a URL (letters, numbers, hyphens only).
+- **Frontmatter**: the small metadata block at the top of a Markdown file, used by the build.
+- **Metadata**: descriptive information about a page (title, summary, tags) that the system reads.
+- **Template**: the HTML layout document that tells the build where content is placed and how the page is structured.
+- **Build**: the process that turns Markdown into the published HTML files.
+- **Lint**: an automated check that flags writing or formatting issues.
+- **Repository (repo)**: the folder tracked by git, usually hosted on GitHub.
+- **Upstream**: the source repo you pull updates from.
+- **CI (continuous integration)**: an automated build that runs on each push to keep output consistent.

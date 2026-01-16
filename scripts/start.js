@@ -5,14 +5,13 @@ const { spawn, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const ROOT = path.resolve(__dirname, "..");
-const devBuildScript = path.join("scripts", "dev-build.js");
-const nodemonBin = path.join(
-  ROOT,
-  "node_modules",
-  ".bin",
-  process.platform === "win32" ? "nodemon.cmd" : "nodemon",
-);
+const ROOT = process.cwd();
+const SCRIBERE_ROOT = path.resolve(__dirname, "..");
+const devBuildScript = path.join(SCRIBERE_ROOT, "scripts", "dev-build.js");
+const nodemonName = process.platform === "win32" ? "nodemon.cmd" : "nodemon";
+const instanceNodemon = path.join(ROOT, "node_modules", ".bin", nodemonName);
+const engineNodemon = path.join(SCRIBERE_ROOT, "node_modules", ".bin", nodemonName);
+const nodemonBin = fs.existsSync(instanceNodemon) ? instanceNodemon : engineNodemon;
 
 if (!fs.existsSync(nodemonBin)) {
   console.error("[dev] nodemon is missing. Run `npm install` first.");
@@ -33,7 +32,7 @@ if (devBuildResult.status !== 0) {
 }
 
 const host = process.env.HOST || "127.0.0.1";
-const server = spawn(process.execPath, ["scripts/serve.js"], {
+const server = spawn(process.execPath, [path.join(SCRIBERE_ROOT, "scripts", "serve.js")], {
   stdio: "inherit",
   cwd: ROOT,
   env: { ...process.env, HOST: host },
