@@ -77,9 +77,11 @@ If you run setup in a non-interactive shell, it uses the defaults from the examp
 Add your own repository as the origin and push.
 
 ```sh
-git remote add origin git@github.com:YOUR-USERNAME/YOUR-REPO.git
+git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
 git push -u origin main
 ```
+
+The first push will prompt you to sign in via your browser. After that, Git will remember your credentials.
 
 ## 6. Run the local server
 
