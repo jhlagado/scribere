@@ -27,25 +27,37 @@ Windows note: if you see path length errors on Windows, enable long paths in sys
 
 ## Create a new blog from scratch
 
-This flow starts from an empty repository. It pulls the engine in from the Scribere upstream, then uses the setup script to create your instance.
+This flow starts from an empty repository. Your blog repo depends on Scribere via `package.json`, and the setup script creates your instance in `content/`.
 
 1) Create a new empty repo on GitHub.
-2) Initialise a local folder and pull the engine from upstream:
+
+2) Create a local folder and initialise Git:
 
 ```sh
 mkdir my-blog
 cd my-blog
 git init
-
-git remote add upstream https://github.com/jhlagado/scribere.git
-git pull upstream main
 ```
 
-3) Add your own origin and push the code:
+3) Add a `package.json` that installs Scribere and exposes the scripts:
 
-```sh
-git remote add origin git@github.com:YOUR-USERNAME/YOUR-REPO.git
-git push -u origin main
+```json
+{
+  "name": "my-blog",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/scribere/scripts/start.js",
+    "build": "node node_modules/scribere/scripts/build.js",
+    "rebuild": "node node_modules/scribere/scripts/rebuild.js",
+    "lint": "node node_modules/scribere/scripts/prose-lint.js",
+    "publish": "node node_modules/scribere/scripts/publish.js",
+    "update": "node node_modules/scribere/scripts/update.js",
+    "setup": "node node_modules/scribere/scripts/setup.js"
+  },
+  "dependencies": {
+    "scribere": "git+https://github.com/jhlagado/scribere.git"
+  }
+}
 ```
 
 4) Install dependencies and run the setup script:
@@ -55,11 +67,17 @@ npm install
 npm run setup
 ```
 
-The setup script copies `/example/` to `content/` and updates `content/site.json` with your details.
-It also makes sure an `upstream` remote exists and fetches it so later updates work.
+The setup script copies the bundled `/example/` instance into `content/` and updates `content/site.json` with your details.
 If you run setup again after you have content, it will skip the copy and leave your data untouched.
 
-5) Start the local server:
+5) Add your own origin and push the code:
+
+```sh
+git remote add origin git@github.com:YOUR-USERNAME/YOUR-REPO.git
+git push -u origin main
+```
+
+6) Start the local server:
 
 ```sh
 npm start
@@ -99,7 +117,7 @@ If you want upstream changes later, run:
 npm run update
 ```
 
-Setup adds the upstream remote automatically, and `npm run update` will add it if it is missing. Conflicts are rare if your edits stay inside `content/`, but they can happen if you modify engine files. Treat those merges as you would any other Git change.
+`npm run update` refreshes the Scribere dependency and updates your lockfile. It will refuse to run if your working tree has uncommitted changes.
 
 ## Tooling notes
 
