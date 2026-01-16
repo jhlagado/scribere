@@ -42,6 +42,9 @@ function copyDir(source, dest) {
 }
 
 function prompt(question, fallback) {
+  if (!process.stdin.isTTY) {
+    return Promise.resolve(fallback || '');
+  }
   const suffix = fallback ? ` [${fallback}]` : '';
   return new Promise((resolve) => {
     rl.question(`${question}${suffix}: `, (answer) => {
