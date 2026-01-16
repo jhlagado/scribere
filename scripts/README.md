@@ -60,6 +60,8 @@ npm run publish
 
 This runs lint and blocks only on high-severity issues, then stages all changes, commits with a default message, and pushes to your remote. It expects git to be installed and your user name/email to be configured.
 
+If `origin` is missing or git user details are unset, the publish step stops and prints the exact commands to fix it.
+
 ## Lint prose in drafts
 
 The prose linter scans `content/**/article.md` when `/content/` exists. If not, it falls back to `example/**/article.md`.
