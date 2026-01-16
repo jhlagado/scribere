@@ -7,7 +7,9 @@ const readline = require('readline');
 
 const ROOT = process.cwd();
 const CONTENT_ROOT = path.join(ROOT, 'content');
-const EXAMPLE_INSTANCE = path.join(ROOT, 'example');
+const EXAMPLE_INSTANCE = fs.existsSync(path.join(ROOT, 'example'))
+  ? path.join(ROOT, 'example')
+  : path.resolve(__dirname, '..', 'example');
 const UPSTREAM_REMOTE = 'upstream';
 const UPSTREAM_URL = 'https://github.com/jhlagado/scribere.git';
 
