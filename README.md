@@ -51,7 +51,13 @@ That runs the local preview and rebuilds when files change.
 
 ## Deploy on GitHub Pages
 
-To deploy, push the repo to GitHub (the setup step already commits and pushes). Enable GitHub Pages by opening the repo on GitHub and going to Settings → Pages, then choose GitHub Actions as the source. After the first Actions run, your site will be live at:
+To deploy, push the repo to GitHub (the setup step already commits and pushes). Then enable GitHub Pages:
+
+1. Open your repo on GitHub.
+2. Go to Settings → Pages.
+3. In the Build and deployment section, choose GitHub Actions as the source.
+
+After the first Actions run, your site will be live at:
 
 ```
 https://my-user-id.github.io/my-big-blog/
