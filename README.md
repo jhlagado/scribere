@@ -145,7 +145,7 @@ The workflow in `.github/workflows/deploy-pages.yml` builds and publishes to Git
 
 Make sure the `SITE_URL` value in the workflow matches your public URL. That value also needs to match `siteUrl` in `content/site.json`, because it is used for the sitemap, RSS feed, and canonical links.
 
-If your blog lives under a GitHub Pages project URL (for example `https://YOUR-USER.github.io/REPO/`), you must also set `BASE_PATH=/REPO` in the workflow. For a custom domain at the root, leave `BASE_PATH` empty.
+The build derives the base path from `siteUrl`. Project URLs such as `https://YOUR-USER.github.io/REPO/` are handled automatically. For a custom domain at the root, the base path is empty. Only set `BASE_PATH` if you need to override the automatic value.
 
 ## Custom domain
 

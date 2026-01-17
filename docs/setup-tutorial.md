@@ -123,19 +123,11 @@ Your site will be available at:
 https://jhlagado.github.io/my-blog/
 ```
 
-### Base path note (GitHub Pages project sites)
+### Base path (automatic)
 
-If your site lives at `https://YOUR-USER.github.io/REPO/`, you must set `BASE_PATH=/REPO` in your Pages workflow so asset and content links resolve correctly. For a custom domain at the root (for example `https://example.com/`), leave `BASE_PATH` empty.
+Scribere derives the base path from `siteUrl`. If your site URL is a GitHub Pages project URL such as `https://YOUR-USER.github.io/REPO/`, the build will automatically prefix asset and content URLs with `/REPO`. For a custom domain at the root (for example `https://example.com/`), the base path is empty.
 
-In `.github/workflows/deploy-pages.yml`, add:
-
-```yaml
-      - name: Build
-        run: npm run build
-        env:
-          SITE_URL: https://YOUR-USER.github.io/REPO
-          BASE_PATH: /REPO
-```
+Only set `BASE_PATH` if you need to override that automatic behaviour.
 
 ## 7. Run locally
 

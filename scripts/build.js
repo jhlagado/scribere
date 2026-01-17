@@ -57,7 +57,11 @@ const ARCHIVE_OUTPUT_ROOT = path.join(OUTPUT_DIR, 'content');
 const ARCHIVE_ROOT_PATH = '/content/';
 
 const SITE_URL = process.env.SITE_URL || SITE_CONFIG.siteUrl;
-const BASE_PATH = normalizeBasePath(process.env.BASE_PATH || '');
+const BASE_PATH = normalizeBasePath(
+  process.env.BASE_PATH !== undefined
+    ? process.env.BASE_PATH
+    : deriveBasePathFromUrl(SITE_URL)
+);
 const CUSTOM_DOMAIN = process.env.CUSTOM_DOMAIN || SITE_CONFIG.customDomain;
 const SITE_NAME = SITE_CONFIG.siteName;
 const SITE_DESCRIPTION = SITE_CONFIG.siteDescription;
@@ -117,6 +121,22 @@ const MONTH_NAMES = [
 
 function isTruthy(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase());
+}
+
+function deriveBasePathFromUrl(siteUrl) {
+  if (!siteUrl) {
+    return '';
+  }
+  try {
+    const parsed = new URL(siteUrl);
+    const pathName = parsed.pathname || '';
+    if (!pathName || pathName === '/') {
+      return '';
+    }
+    return pathName.replace(/\/$/, '');
+  } catch {
+    return '';
+  }
 }
 
 function main() {
