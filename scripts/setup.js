@@ -161,9 +161,10 @@ async function main() {
 
   const basePath = deriveBasePath(siteUrl);
   if (basePath) {
-    console.log(`[setup] Detected site path '${basePath}'. If you are using GitHub Pages project sites, set BASE_PATH=${basePath} in your Pages workflow.`);
+    console.log(`[setup] Detected site path '${basePath}'. The build derives BASE_PATH from siteUrl automatically.`);
+    console.log('[setup] Override with BASE_PATH only if you need a different path.');
   } else {
-    console.log('[setup] If you are using a custom domain at the root, leave BASE_PATH empty.');
+    console.log('[setup] Site URL looks like a root domain. BASE_PATH will be empty unless you override it.');
   }
 
   console.log('\nSetup complete.');
