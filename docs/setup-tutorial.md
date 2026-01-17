@@ -1,45 +1,34 @@
-# Set up your own Scribere blog
+# Scribere Setup Tutorial
 
-This tutorial starts from an empty repository and ends with a live blog on GitHub Pages. It assumes you want engine updates without inheriting someone else’s content. The key idea is simple: the engine lives in the root, while your site lives under `content/`.
+This guide walks you from zero to a working blog using Scribere. It uses the GitHub CLI so the steps are repeatable and low‑friction. The example repo name is `my-blog`, and we’ll serve it from GitHub Pages with no custom domain.
 
-## Before you start
+## Prerequisites
 
-You need Node.js and git.
+Install these before you start:
 
-- Node.js: https://nodejs.org/en (use the LTS release)
-- Git:
-  - macOS: `xcode-select --install` (or `brew install git`)
-  - Linux (Debian/Ubuntu): `sudo apt install git`
-  - Linux (Fedora): `sudo dnf install git`
-  - Windows: https://gitforwindows.org/
+- Git: https://git-scm.com/downloads
+- Node.js: https://nodejs.org/en
+- GitHub CLI (`gh`): https://cli.github.com/
 
-## 1. Create an empty repo
+Then sign in to GitHub CLI:
 
-Create a new repository on GitHub. Leave it empty. You will pull the Scribere engine into it next.
+```sh
+gh auth login
+```
 
-## 2. Create your local repo
+## 1. Create a new local project
 
-Create a local folder and initialise Git.
+Pick a folder for your new blog and initialise it:
 
 ```sh
 mkdir my-blog
 cd my-blog
-git init
+git init -b main
 ```
 
-Add a basic `.gitignore` so build output and dependencies do not end up in Git.
+## 2. Add Scribere as a dependency
 
-```sh
-cat <<'EOF' > .gitignore
-/build/
-/node_modules/
-/temp/
-EOF
-```
-
-## 3. Add Scribere to your package.json
-
-Create a `package.json` that installs Scribere and exposes the scripts:
+Create `package.json` and point it at the Scribere repo:
 
 ```json
 {
@@ -50,8 +39,8 @@ Create a `package.json` that installs Scribere and exposes the scripts:
     "build": "node node_modules/scribere/scripts/build.js",
     "rebuild": "node node_modules/scribere/scripts/rebuild.js",
     "lint": "node node_modules/scribere/scripts/prose-lint.js",
-    "publish": "node node_modules/scribere/scripts/publish.js",
     "update": "node node_modules/scribere/scripts/update.js",
+    "publish": "node node_modules/scribere/scripts/publish.js",
     "setup": "node node_modules/scribere/scripts/setup.js"
   },
   "dependencies": {
@@ -60,53 +49,106 @@ Create a `package.json` that installs Scribere and exposes the scripts:
 }
 ```
 
-## 4. Install dependencies and run setup
+Add a `.gitignore` so build output and dependencies don’t get committed:
 
-Install Node dependencies and run the setup script. The script copies `/example/` into `/content/`, then updates your `content/site.json` values.
+```gitignore
+/node_modules/
+/build/
+/temp/
+.DS_Store
+```
+
+Install dependencies:
 
 ```sh
 npm install
+```
+
+## 3. Initialise your site content
+
+Run the setup script to create the `content/` folder and site metadata:
+
+```sh
 npm run setup
 ```
 
-If `/content/` already exists, the script will stop to avoid overwriting your work.
-If you run setup in a non-interactive shell, it uses the defaults from the example instance. You can update `content/site.json` by hand at any time, or delete `content/` and run setup again.
+Use values that match your blog. Example inputs:
 
-## 5. Point the repo at your origin
+- Site name: `My Blog`
+- Description: `A personal blog built with Scribere.`
+- Site URL: `https://jhlagado.github.io/my-blog`
+- Custom domain: *(leave blank)*
+- Author: `John Hardy`
+- Language: `en-AU`
 
-Add your own repository as the origin and push.
+After setup, your site lives in `content/`:
+
+- `content/site.json` holds site metadata
+- `content/templates/` holds HTML templates
+- `content/assets/` holds CSS and images
+- `content/YYYY/MM/DD/NN-slug/` holds posts
+
+## 4. Create the GitHub repo (via gh)
+
+From the project folder, create the GitHub repo and wire it up:
 
 ```sh
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
+gh repo create jhlagado/my-blog --public --source . --remote origin
+```
+
+## 5. Commit and push
+
+```sh
+git add .
+git commit -m "Initial blog setup"
 git push -u origin main
 ```
 
-The first push will prompt you to sign in via your browser. After that, Git will remember your credentials.
+## 6. Enable GitHub Pages (via gh)
 
-## 6. Run the local server
+This enables Pages from the `main` branch using GitHub Actions:
+
+```sh
+gh api -X POST \
+  -H "Accept: application/vnd.github+json" \
+  /repos/jhlagado/my-blog/pages \
+  -f "source[branch]=main" \
+  -f "source[path]=/" \
+  -f "build_type=workflow"
+```
+
+Your site will be available at:
+
+```
+https://jhlagado.github.io/my-blog/
+```
+
+## 7. Run locally
 
 ```sh
 npm start
 ```
 
-This builds the site and starts a watcher that rebuilds when you edit content, templates, or assets.
+This runs the dev server, rebuilds on changes, and shows draft/lint issues during local development.
 
-## 7. Publish to GitHub Pages
+## 8. Publishing updates
 
-The repository ships with a GitHub Actions workflow that builds and publishes to Pages on every push to `main`. In **Settings → Pages**, set the source to **GitHub Actions**. Then update the `SITE_URL` value inside `.github/workflows/deploy-pages.yml` so it matches your public URL.
-
-That same URL should be used in `content/site.json`. It feeds the sitemap, RSS, and canonical links.
-
-## 8. Add a custom domain (optional)
-
-When Pages is live, you can set a custom domain in your repository settings. Add a `CNAME` file to the published output containing your domain, then create the DNS records that GitHub Pages expects.
-
-## 9. Pulling engine updates later
-
-If you want future engine updates, run:
+When you edit or add posts:
 
 ```sh
-npm run update
+git add .
+git commit -m "Update content"
+git push
 ```
 
-`npm run update` refreshes the Scribere dependency and updates your lockfile. It will refuse to run if your working tree has uncommitted changes.
+GitHub Actions will rebuild and publish automatically.
+
+---
+
+## Notes for non‑technical users
+
+- Keep one terminal open running `npm start`.
+- Use your AI tool to edit files and check the local preview.
+- When the AI says the build is clean, commit and push.
+
+If you get stuck, check the Actions tab in GitHub to see build errors.
