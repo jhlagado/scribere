@@ -152,13 +152,13 @@ async function main() {
   const ghUser = runCapture("gh", ["api", "user", "--jq", ".login"], { cwd: ROOT });
   const siteUrlDefault = ghUser ? `https://${ghUser}.github.io/${repoName}` : "https://example.com";
 
+  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
   const siteName = await prompt("Site name", toTitleCase(repoName));
   const siteDescription = await prompt("Site description", DEFAULT_DESCRIPTION);
   const siteUrl = await prompt("Site URL", siteUrlDefault);
   const customDomain = await prompt("Custom domain (optional)", "");
   const author = await prompt("Author name", authorDefault);
   const language = await prompt("Language tag", DEFAULT_LANGUAGE);
-  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
 
   const targetRoot = path.resolve(ROOT, projectFolder);
   ensureDir(targetRoot);
