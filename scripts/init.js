@@ -158,6 +158,7 @@ async function main() {
   const customDomain = await prompt("Custom domain (optional)", "");
   const author = await prompt("Author name", authorDefault);
   const language = await prompt("Language tag", DEFAULT_LANGUAGE);
+  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
 
   const targetRoot = path.resolve(ROOT, projectFolder);
   ensureDir(targetRoot);
@@ -240,8 +241,21 @@ async function main() {
   run("git", ["add", "."], { cwd: targetRoot });
   run("git", ["commit", "-m", "Initial blog setup"], { cwd: targetRoot });
 
-  if (ghReady) {
+  const hasOrigin = Boolean(runCapture("git", ["remote", "get-url", "origin"], { cwd: targetRoot }));
+  if (!hasOrigin && remoteUrl) {
+    run("git", ["remote", "add", "origin", remoteUrl], { cwd: targetRoot });
+  }
+
+  const shouldPush =
+    ghReady ||
+    (Boolean(runCapture("git", ["remote", "get-url", "origin"], { cwd: targetRoot })) &&
+      (await prompt("Push to origin now? (y/n)", "y")).toLowerCase().startsWith("y"));
+
+  if (shouldPush) {
     run("git", ["push", "-u", "origin", "main"], { cwd: targetRoot });
+  }
+
+  if (ghReady && shouldPush) {
     run("gh", [
       "api",
       "-X",
