@@ -40,6 +40,18 @@ const run = (command, args, options = {}) => {
   }
 };
 
+const runOptional = (command, args, options = {}) => {
+  const result = spawnSync(command, args, { stdio: "inherit", ...options });
+  if (result.error) {
+    console.warn(`[init] ${result.error.message}`);
+    return false;
+  }
+  if (result.status !== 0) {
+    return false;
+  }
+  return true;
+};
+
 const runCapture = (command, args, options = {}) => {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
   if (result.error) {
@@ -228,11 +240,16 @@ async function main() {
 
   const ghAvailable = Boolean(runCapture("gh", ["--version"], { cwd: targetRoot }));
   const ghReady = ghAvailable && Boolean(ghUser);
-  if (ghReady) {
-    run("gh", ["repo", "create", repoName, "--public", "--source", ".", "--remote", "origin"], {
-      cwd: targetRoot,
-    });
-  } else {
+  if (ghReady && !remoteUrl) {
+    const created = runOptional(
+      "gh",
+      ["repo", "create", repoName, "--public", "--source", ".", "--remote", "origin"],
+      { cwd: targetRoot }
+    );
+    if (!created) {
+      console.log("[init] GitHub repo already exists or could not be created.");
+    }
+  } else if (!ghReady) {
     console.log(
       "[init] gh CLI is missing or not authenticated. Create the repo manually, then add origin."
     );
