@@ -177,10 +177,9 @@ async function main() {
   const projectFolder = await prompt("Project folder", defaultFolder);
   const repoName = await prompt("Repository name", parsedRemote?.repo || path.basename(projectFolder));
 
-  const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
-  const authorDefault = gitUser || "Your Name";
-
   const ghUser = runCapture("gh", ["api", "user", "--jq", ".login"], { cwd: ROOT });
+  const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
+  const authorDefault = ghUser || gitUser || "Your Name";
   const derivedOwner = parsedRemote?.owner || ghUser;
   const siteUrlDefault = derivedOwner
     ? `https://${derivedOwner}.github.io/${repoName}`
