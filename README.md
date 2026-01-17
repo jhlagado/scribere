@@ -25,19 +25,50 @@ The dev server uses `nodemon` for file watching, and it is installed when you ru
 
 Windows note: if you see path length errors on Windows, enable long paths in system settings and restart your shell.
 
-## Get started (one command)
+## Get started (manual GitHub, no CLI)
+
+### 1) Create the repo on GitHub
+
+1. Go to https://github.com/new
+2. Repository name: `my-blog`
+3. Public
+4. Do not add a README or .gitignore
+5. Click Create repository
+
+Copy the HTTPS URL shown on the repo page. It looks like:
+
+```
+https://github.com/YOUR-USER/my-blog.git
+```
+
+### 2) Run the Scribere setup
+
+From the parent folder where you want the blog created:
 
 ```sh
 npx --yes github:jhlagado/scribere
 ```
 
-The setup script creates a new blog folder, installs Scribere, copies the example site into `content/`, and (if `gh` is logged in) creates a GitHub repo, pushes it, and enables Pages. Follow the prompts, then run:
+When prompted, paste the repo URL you copied. The script will create the folder, install Scribere, copy the example site into `content/`, add the git remote, commit, and push.
+
+### 3) Enable GitHub Pages
+
+1. Open your repo on GitHub
+2. Go to Settings → Pages
+3. Under Source, choose GitHub Actions
+4. Save
+
+Your site will be available at:
+
+```
+https://YOUR-USER.github.io/my-blog/
+```
+
+### 4) Run locally
 
 ```sh
 npm start
 ```
-
-Full walkthrough: [docs/setup-tutorial.md](docs/setup-tutorial.md).
 
 ## Local workflow
 
