@@ -123,6 +123,20 @@ Your site will be available at:
 https://jhlagado.github.io/my-blog/
 ```
 
+### Base path note (GitHub Pages project sites)
+
+If your site lives at `https://YOUR-USER.github.io/REPO/`, you must set `BASE_PATH=/REPO` in your Pages workflow so asset and content links resolve correctly. For a custom domain at the root (for example `https://example.com/`), leave `BASE_PATH` empty.
+
+In `.github/workflows/deploy-pages.yml`, add:
+
+```yaml
+      - name: Build
+        run: npm run build
+        env:
+          SITE_URL: https://YOUR-USER.github.io/REPO
+          BASE_PATH: /REPO
+```
+
 ## 7. Run locally
 
 ```sh

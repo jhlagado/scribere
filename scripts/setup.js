@@ -54,6 +54,22 @@ function prompt(question, fallback) {
   });
 }
 
+function deriveBasePath(siteUrl) {
+  if (!siteUrl) {
+    return '';
+  }
+  try {
+    const parsed = new URL(siteUrl);
+    const pathName = parsed.pathname || '';
+    if (!pathName || pathName === '/') {
+      return '';
+    }
+    return pathName.replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
 function assertExampleInstance() {
   if (!fs.existsSync(EXAMPLE_INSTANCE)) {
     throw new Error('Missing /example. The engine ships with an example instance.');
@@ -141,6 +157,13 @@ async function main() {
     siteJson.author = author;
     siteJson.language = language;
     writeJson(siteJsonPath, siteJson);
+  }
+
+  const basePath = deriveBasePath(siteUrl);
+  if (basePath) {
+    console.log(`[setup] Detected site path '${basePath}'. If you are using GitHub Pages project sites, set BASE_PATH=${basePath} in your Pages workflow.`);
+  } else {
+    console.log('[setup] If you are using a custom domain at the root, leave BASE_PATH empty.');
   }
 
   console.log('\nSetup complete.');

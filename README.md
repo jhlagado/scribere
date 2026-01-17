@@ -145,6 +145,8 @@ The workflow in `.github/workflows/deploy-pages.yml` builds and publishes to Git
 
 Make sure the `SITE_URL` value in the workflow matches your public URL. That value also needs to match `siteUrl` in `content/site.json`, because it is used for the sitemap, RSS feed, and canonical links.
 
+If your blog lives under a GitHub Pages project URL (for example `https://YOUR-USER.github.io/REPO/`), you must also set `BASE_PATH=/REPO` in the workflow. For a custom domain at the root, leave `BASE_PATH` empty.
+
 ## Custom domain
 
 Once GitHub Pages is live, you can set a custom domain in the repository settings. Add a `CNAME` file to the published output containing your domain, and create the DNS records that GitHub Pages expects.
