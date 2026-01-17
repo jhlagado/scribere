@@ -49,4 +49,8 @@ To deploy, push the repo to GitHub (the setup step already commits and pushes). 
 https://my-user-id.github.io/my-big-blog/
 ```
 
-If you want a custom domain later, add it in the GitHub Pages settings. Then create the DNS records GitHub recommends. Once DNS is live, your site will be available at the custom domain.
+If you want a custom domain later, set it up in three short steps:
+
+1. In your repo, go to Settings → Pages and enter your domain in the Custom domain field. Save it.
+2. GitHub will show the exact DNS records to add. Go to your DNS provider and add those records (usually A records for the apex, and a CNAME for `www` if you use it).
+3. Wait for DNS to update. When it is live, your site will load at the custom domain.
