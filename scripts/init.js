@@ -30,6 +30,14 @@ const prompt = (question, fallback) => {
   });
 };
 
+const promptRequired = async (question) => {
+  let answer = "";
+  while (!answer) {
+    answer = (await prompt(question, "")).trim();
+  }
+  return answer;
+};
+
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, { stdio: "inherit", ...options });
   if (result.error) {
@@ -159,14 +167,14 @@ jobs:
 };
 
 async function main() {
-  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
+  const remoteUrl = await promptRequired("Git remote HTTPS URL");
   const parsedRemote = parseGitRemote(remoteUrl);
   const defaultFolder = parsedRemote?.repo || "my-blog";
   const projectFolder = await prompt("Project folder", defaultFolder);
   const repoName = await prompt("Repository name", parsedRemote?.repo || path.basename(projectFolder));
 
   const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
-  const authorDefault = gitUser || "Your Name";
+  const authorDefault = parsedRemote?.owner || gitUser || "Your Name";
   const derivedOwner = parsedRemote?.owner;
   const siteUrlDefault = derivedOwner
     ? `https://${derivedOwner}.github.io/${repoName}`
@@ -265,7 +273,7 @@ async function main() {
 
   console.log("\nSetup complete.");
   console.log(`- Folder: ${targetRoot}`);
-  console.log("- Next: npm start");
+  console.log(`- Next:\n  cd ${targetRoot}\n  npm start`);
 }
 
 main()
