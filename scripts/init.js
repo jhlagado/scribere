@@ -102,6 +102,22 @@ const toTitleCase = (value) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const parseGitRemote = (remote) => {
+  if (!remote) {
+    return null;
+  }
+  const trimmed = remote.trim();
+  const httpsMatch = trimmed.match(/https?:\/\/[^/]+\/([^/]+)\/([^/]+?)(?:\.git)?$/i);
+  if (httpsMatch) {
+    return { owner: httpsMatch[1], repo: httpsMatch[2] };
+  }
+  const sshMatch = trimmed.match(/^[^@]+@[^:]+:([^/]+)\/(.+?)(?:\.git)?$/i);
+  if (sshMatch) {
+    return { owner: sshMatch[1], repo: sshMatch[2] };
+  }
+  return null;
+};
+
 const createWorkflow = (siteUrl) => {
   return `name: Deploy Pages
 
@@ -155,16 +171,21 @@ jobs:
 };
 
 async function main() {
-  const projectFolder = await prompt("Project folder", "my-blog");
-  const repoName = await prompt("Repository name", path.basename(projectFolder));
+  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
+  const parsedRemote = parseGitRemote(remoteUrl);
+  const defaultFolder = parsedRemote?.repo || "my-blog";
+  const projectFolder = await prompt("Project folder", defaultFolder);
+  const repoName = await prompt("Repository name", parsedRemote?.repo || path.basename(projectFolder));
 
   const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
   const authorDefault = gitUser || "Your Name";
 
   const ghUser = runCapture("gh", ["api", "user", "--jq", ".login"], { cwd: ROOT });
-  const siteUrlDefault = ghUser ? `https://${ghUser}.github.io/${repoName}` : "https://example.com";
+  const derivedOwner = parsedRemote?.owner || ghUser;
+  const siteUrlDefault = derivedOwner
+    ? `https://${derivedOwner}.github.io/${repoName}`
+    : "https://example.com";
 
-  const remoteUrl = await prompt("Git remote HTTPS URL (optional)", "");
   const siteName = await prompt("Site name", toTitleCase(repoName));
   const siteDescription = await prompt("Site description", DEFAULT_DESCRIPTION);
   const siteUrl = await prompt("Site URL", siteUrlDefault);

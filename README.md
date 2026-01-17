@@ -49,7 +49,7 @@ From the parent folder where you want the blog created:
 npx --yes github:jhlagado/scribere
 ```
 
-When prompted (near the start), paste the repo URL you copied. The script will create the folder, install Scribere, copy the example site into `content/`, add the git remote, commit, and push.
+When prompted (near the start), paste the repo URL you copied. The script will infer defaults (folder name, repo name, site URL) from it, then create the folder, install Scribere, copy the example site into `content/`, add the git remote, commit, and push.
 
 ### 3) Enable GitHub Pages
 
