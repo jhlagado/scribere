@@ -25,7 +25,7 @@ The dev server uses `nodemon` for file watching, and it is installed when you ru
 
 Windows note: if you see path length errors on Windows, enable long paths in system settings and restart your shell.
 
-## Quick start (gh CLI)
+## Get started (gh CLI)
 
 This is the shortest path to a working GitHub Pages site.
 
@@ -65,75 +65,15 @@ npm start
 
 Full walkthrough: [docs/setup-tutorial.md](docs/setup-tutorial.md).
 
-## Create a new blog from scratch
-
-This flow starts from an empty repository. Your blog repo depends on Scribere via `package.json`, and the setup script creates your instance in `content/`.
-
-1) Create a new empty repo on GitHub.
-
-2) Create a local folder and initialise Git:
-
-```sh
-mkdir my-blog
-cd my-blog
-git init
-```
-
-3) Add a `package.json` that installs Scribere and exposes the scripts:
-
-```json
-{
-  "name": "my-blog",
-  "private": true,
-  "scripts": {
-    "start": "node node_modules/scribere/scripts/start.js",
-    "build": "node node_modules/scribere/scripts/build.js",
-    "rebuild": "node node_modules/scribere/scripts/rebuild.js",
-    "lint": "node node_modules/scribere/scripts/prose-lint.js",
-    "publish": "node node_modules/scribere/scripts/publish.js",
-    "update": "node node_modules/scribere/scripts/update.js",
-    "setup": "node node_modules/scribere/scripts/setup.js"
-  },
-  "dependencies": {
-    "scribere": "git+https://github.com/jhlagado/scribere.git"
-  }
-}
-```
-
-4) Install dependencies and run the setup script:
-
-```sh
-npm install
-npm run setup
-```
-
-The setup script copies the bundled `/example/` instance into `content/` and updates `content/site.json` with your details.
-If you run setup again after you have content, it will skip the copy and leave your data untouched.
-
-5) Add your own origin and push the code (HTTPS):
-
-```sh
-git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
-git push -u origin main
-```
-
-6) Start the local server:
-
-```sh
-npm start
-```
-
 ## Local workflow
 
-Most people will keep a dev server terminal open and let it rebuild on change, while they author content through their editor or AI assistant. When the site looks correct and lint warnings are acceptable, publish with:
+Keep the dev server running in one terminal (`npm start`) and write in another window. When the site looks correct and lint warnings are acceptable, publish with:
 
 ```sh
 npm run publish
 ```
 
-This runs lint and blocks only on high-severity issues, then stages all changes, commits with a default message, and pushes to your remote. It keeps git out of the day-to-day loop after initial setup.
-
-For a full walkthrough of the two-window authoring loop, see [docs/workflow.md](docs/workflow.md).
+This runs lint and blocks only on high-severity issues, then stages all changes, commits with a default message, and pushes to your remote.
 
 ## Where your site lives
 
@@ -159,7 +99,7 @@ If you want upstream changes later, run:
 npm run update
 ```
 
-`npm run update` refreshes the Scribere dependency and updates your lockfile. It will refuse to run if your working tree has uncommitted changes.
+`npm run update` refreshes the Scribere dependency via `npm install` and updates your lockfile. It will refuse to run if your working tree has uncommitted changes.
 
 ## Tooling notes
 
