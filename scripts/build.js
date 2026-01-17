@@ -2424,7 +2424,7 @@ function articlePublishedTime(article) {
 }
 
 function siteImageUrl() {
-  return joinUrl(SITE_URL, '/assets/semantic-scroll.png');
+  return joinUrl(SITE_URL, '/assets/example-favicon.png');
 }
 
 function articleOgImage(article) {
