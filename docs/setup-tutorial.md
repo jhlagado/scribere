@@ -35,6 +35,8 @@ npx --yes github:jhlagado/scribere
 
 The script asks a few questions and then creates the blog folder, installs Scribere, and copies the example site into `content/`.
 
+If you already created the GitHub repo, paste its HTTPS URL when prompted. The script can add `origin`, commit, and push for you.
+
 Example answers:
 
 - Site name: `My Blog`
