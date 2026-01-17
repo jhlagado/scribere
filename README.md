@@ -25,6 +25,46 @@ The dev server uses `nodemon` for file watching, and it is installed when you ru
 
 Windows note: if you see path length errors on Windows, enable long paths in system settings and restart your shell.
 
+## Quick start (gh CLI)
+
+This is the shortest path to a working GitHub Pages site.
+
+```sh
+mkdir my-blog
+cd my-blog
+git init -b main
+```
+
+Create `package.json` and `.gitignore` as shown below, then:
+
+```sh
+npm install
+npm run setup
+gh repo create YOUR-USER/my-blog --public --source . --remote origin
+git add .
+git commit -m "Initial blog setup"
+git push -u origin main
+```
+
+Enable Pages (one time):
+
+```sh
+gh api -X POST \
+  -H "Accept: application/vnd.github+json" \
+  /repos/YOUR-USER/my-blog/pages \
+  -f "source[branch]=main" \
+  -f "source[path]=/" \
+  -f "build_type=workflow"
+```
+
+Then run the dev server locally:
+
+```sh
+npm start
+```
+
+Full walkthrough: [docs/setup-tutorial.md](docs/setup-tutorial.md).
+
 ## Create a new blog from scratch
 
 This flow starts from an empty repository. Your blog repo depends on Scribere via `package.json`, and the setup script creates your instance in `content/`.
