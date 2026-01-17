@@ -246,13 +246,14 @@ async function main() {
     run("git", ["remote", "add", "origin", remoteUrl], { cwd: targetRoot });
   }
 
-  const shouldPush =
-    ghReady ||
-    (Boolean(runCapture("git", ["remote", "get-url", "origin"], { cwd: targetRoot })) &&
-      (await prompt("Push to origin now? (y/n)", "y")).toLowerCase().startsWith("y"));
+  const shouldPush = Boolean(
+    runCapture("git", ["remote", "get-url", "origin"], { cwd: targetRoot })
+  );
 
   if (shouldPush) {
     run("git", ["push", "-u", "origin", "main"], { cwd: targetRoot });
+  } else {
+    console.log("[init] No git remote found. Add origin and push when ready.");
   }
 
   if (ghReady && shouldPush) {
