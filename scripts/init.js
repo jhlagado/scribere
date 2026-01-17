@@ -40,18 +40,6 @@ const run = (command, args, options = {}) => {
   }
 };
 
-const runOptional = (command, args, options = {}) => {
-  const result = spawnSync(command, args, { stdio: "inherit", ...options });
-  if (result.error) {
-    console.warn(`[init] ${result.error.message}`);
-    return false;
-  }
-  if (result.status !== 0) {
-    return false;
-  }
-  return true;
-};
-
 const runCapture = (command, args, options = {}) => {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
   if (result.error) {
@@ -177,10 +165,9 @@ async function main() {
   const projectFolder = await prompt("Project folder", defaultFolder);
   const repoName = await prompt("Repository name", parsedRemote?.repo || path.basename(projectFolder));
 
-  const ghUser = runCapture("gh", ["api", "user", "--jq", ".login"], { cwd: ROOT });
   const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
-  const authorDefault = ghUser || gitUser || "Your Name";
-  const derivedOwner = parsedRemote?.owner || ghUser;
+  const authorDefault = gitUser || "Your Name";
+  const derivedOwner = parsedRemote?.owner;
   const siteUrlDefault = derivedOwner
     ? `https://${derivedOwner}.github.io/${repoName}`
     : "https://example.com";
@@ -258,23 +245,6 @@ async function main() {
   ensureDir(workflowDir);
   writeFileIfMissing(path.join(workflowDir, "deploy-pages.yml"), createWorkflow(siteUrl));
 
-  const ghAvailable = Boolean(runCapture("gh", ["--version"], { cwd: targetRoot }));
-  const ghReady = ghAvailable && Boolean(ghUser);
-  if (ghReady && !remoteUrl) {
-    const created = runOptional(
-      "gh",
-      ["repo", "create", repoName, "--public", "--source", ".", "--remote", "origin"],
-      { cwd: targetRoot }
-    );
-    if (!created) {
-      console.log("[init] GitHub repo already exists or could not be created.");
-    }
-  } else if (!ghReady) {
-    console.log(
-      "[init] gh CLI is missing or not authenticated. Create the repo manually, then add origin."
-    );
-  }
-
   run("git", ["add", "."], { cwd: targetRoot });
   run("git", ["commit", "-m", "Initial blog setup"], { cwd: targetRoot });
 
@@ -291,21 +261,6 @@ async function main() {
     run("git", ["push", "-u", "origin", "main"], { cwd: targetRoot });
   } else {
     console.log("[init] No git remote found. Add origin and push when ready.");
-  }
-
-  if (ghReady && shouldPush) {
-    run("gh", [
-      "api",
-      "-X",
-      "POST",
-      "/repos/" + (ghUser ? `${ghUser}/${repoName}` : repoName) + "/pages",
-      "-f",
-      "source[branch]=main",
-      "-f",
-      "source[path]=/",
-      "-f",
-      "build_type=workflow",
-    ], { cwd: targetRoot });
   }
 
   console.log("\nSetup complete.");
