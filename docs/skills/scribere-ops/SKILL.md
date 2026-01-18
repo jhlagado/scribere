@@ -14,7 +14,7 @@ This skill covers day‑to‑day operations for Scribere and the Semantic Scroll
 Confirm which repo is in scope (`scribere` engine or `semantic-scroll` instance), then read `AGENTS.md` and the relevant specs (`docs/PRD.md`, `docs/templating.md`, `docs/queries.md`, `docs/ci-pipeline.md`) before proposing changes.
 Treat `AGENTS.md` as mandatory. It is the entry point for any work in this repo and must be followed throughout.
 
-For first‑time setup, use `npm run setup` in a fresh repo. This copies `/example/` into `/content/`, writes `content/site.json`, and ensures an `upstream` remote exists. Do not re‑copy content if `/content/` already exists.
+For first‑time setup, use `npx --yes github:jhlagado/scribere#main` in a fresh folder. This creates the repo, installs Scribere, and copies `/example/` into `/content/`. Do not re‑copy content if `/content/` already exists.
 
 For updates, run `npm run update`. This adds `upstream` if missing, fetches it, and merges `upstream/main`. If the merge fails due to unrelated histories, stop and ask before applying a one‑time `--allow-unrelated-histories` merge.
 

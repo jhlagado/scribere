@@ -49,6 +49,16 @@ npm start
 
 That runs the local preview and rebuilds when files change.
 
+### Create a new article
+
+From the blog folder, run:
+
+```sh
+npm run new
+```
+
+Scribere will ask for the date, title, slug, status, and optional tags or series. It writes a new `content/YYYY/MM/DD/NN-slug/article.md` with the correct frontmatter and a starter body that includes the title and byline.
+
 ## Deploy on GitHub Pages
 
 To deploy, push the repo to GitHub (the setup step already commits and pushes). Then enable GitHub Pages:
