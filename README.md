@@ -49,6 +49,10 @@ npm start
 
 That runs the local preview and rebuilds when files change.
 
+### Keeping the engine up to date
+
+`npm run update` pulls the latest Scribere engine and makes sure your `package.json` scripts and `.gitignore` match the current defaults. It does not touch your content, templates, or assets.
+
 ### Create a new article
 
 From the blog folder, run:
