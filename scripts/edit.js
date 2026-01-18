@@ -123,6 +123,21 @@ const stripQuotes = (value) => {
   return trimmed;
 };
 
+const syncBodyTitle = (body, title) => {
+  const lines = body.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line.trim()) {
+      continue;
+    }
+    if (/^#\s+/.test(line)) {
+      lines[i] = `# ${title}`;
+    }
+    break;
+  }
+  return lines.join("\n");
+};
+
 const getSimpleField = (frontmatter, key) => {
   const match = frontmatter.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
   if (!match) {
@@ -200,6 +215,7 @@ async function main() {
   if (!title) {
     throw new Error("Title is required.");
   }
+  const titleChanged = title !== existingTitle;
 
   let statusInput = await prompt("Status (draft/review/published/archived)", existingStatus || "draft");
   statusInput = statusInput.trim() || existingStatus || "draft";
@@ -247,6 +263,8 @@ async function main() {
     if (!body.endsWith("\n")) {
       body += "\n";
     }
+  } else if (titleChanged) {
+    body = syncBodyTitle(body, title);
   }
 
   const updated = `---\n${frontmatter}\n---\n${body}`;
