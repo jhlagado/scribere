@@ -2,7 +2,7 @@
 
 Scribere is a small blogging engine that turns plain Markdown folders into a static site. You create a repo for your blog, run one command, and Scribere builds the site from the `content/` folder it creates for you.
 
-## Create a blog
+## Set up a blog
 
 ### Choose a name
 
@@ -42,15 +42,17 @@ Language tag [en-AU]:
 When the setup finishes, change into the folder and run the local dev server:
 
 ```sh
-cd /path/to/my-big-blog
+cd my-big-blog
 npm start
 ```
 
 That runs the local preview and rebuilds when files change.
 
-### Keeping the engine up to date
+### Keep the engine up to date
 
 `npm run update` pulls the latest Scribere engine and makes sure your `package.json` scripts and `.gitignore` match the current defaults. It does not touch your content, templates, or assets.
+
+## Write and edit articles
 
 ### Create a new article
 
@@ -89,7 +91,27 @@ npm run edit -- content/2026/01/12/01-sample/article.md
 npm run edit -- https://my-user-id.github.io/my-big-blog/content/2026/01/12/01-sample/
 ```
 
-## Deploy on GitHub Pages
+### Check or rebuild manually
+
+If you want a manual check outside the dev loop:
+
+```sh
+npm run lint
+npm run build
+npm run rebuild
+```
+
+## Publish and deploy
+
+### Publish your changes
+
+```sh
+npm run publish
+```
+
+This runs the prose linter and blocks only on high‑severity issues. If it passes, it stages changes, commits, and pushes to `origin`. GitHub Actions then builds and publishes the site.
+
+### Deploy on GitHub Pages
 
 To deploy, push the repo to GitHub (the setup step already commits and pushes). Then enable GitHub Pages:
 
