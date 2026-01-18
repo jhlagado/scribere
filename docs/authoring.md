@@ -1,6 +1,6 @@
 # Authoring and Prose Specification
 
-This document defines the **voice and style** for all prose generated or edited by AI agents in this project. It is derived from `docs/PRD.md` and mandated by `AGENTS.md`.
+This document defines the **voice and style** for all prose generated or edited by AI agents in this project. It is mandated by `AGENTS.md`.
 
 The goal is to preserve a **human-first, authored "soul"** across the technical diary, specifications, and eventual blog posts.
 

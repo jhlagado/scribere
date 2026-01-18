@@ -1,6 +1,6 @@
 # CSS and Styling Specification
 
-This document defines the principles, constraints, and conventions governing CSS in this project. It is derived from `docs/PRD.md` and aligned with `docs/templating.md`. It is normative, and any styling work that conflicts with it is incorrect unless the document is explicitly revised.
+This document defines the principles, constraints, and conventions governing CSS in this project. It aligns with `docs/templating.md` and is normative; any styling work that conflicts with it is incorrect unless the document is explicitly revised.
 
 ## 1. Purpose and Philosophy
 

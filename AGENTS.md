@@ -24,18 +24,16 @@ Do **not** introduce tools, abstractions, or patterns "for safety" or "best prac
 
 The following documents are authoritative and must not be contradicted:
 
-- `docs/PRD.md`
-- `docs/queries.md`
-- `docs/articles-frontmatter.md`
-- `docs/article-spec.md`
-- `docs/queries-spec.md`
-- `docs/queries-builtin.md`
+- `docs/article.md`
+- `docs/authoring.md`
 - `docs/templating.md`
-- `docs/templating-conventions.md`
-- `docs/templating-javascript.md`
+- `docs/queries.md`
+- `docs/build.md`
+- `docs/ops.md`
 - `docs/styling.md`
-- `docs/ci-pipeline.md`
-- `docs/design-reference.md`
+- `docs/feeds.md`
+- `docs/philosophy.md`
+- `docs/roadmap.md`
 
 If you detect an ambiguity or tension between documents, do not resolve it silently. Surface the issue explicitly and ask for clarification.
 

@@ -1,6 +1,6 @@
 # Templating and Rendering Specification
 
-This document is **normative**. It defines how named queries select articles, how templates consume query results, and how Markdown becomes HTML inside templates. It is derived from `docs/PRD.md` and `docs/queries.md`.
+This document is **normative**. It defines how named queries select articles, how templates consume query results, and how Markdown becomes HTML inside templates. It aligns with `docs/queries.md` and `docs/article.md`.
 
 The intent is to:
 
@@ -218,6 +218,55 @@ If query `X` returns exactly one article record:
 - fallback content is ignored
 - the output is determined by the render mode
 - `article` renders the Markdown body to HTML
+
+---
+
+## 4. Template scope and HTML requirements
+
+Templates exist to define structure and declare where query results appear. They must never compute values, select content, or inspect metadata.
+
+Required characteristics:
+
+- valid HTML5 documents
+- readable without preprocessing
+- no templating syntax
+
+Required pattern for dynamic slots:
+
+```html
+<template data-query="query-name">
+  <p class="empty">No posts yet.</p>
+</template>
+```
+
+Forbidden patterns:
+
+- `data-query` on any element other than `<template>`
+- nested `<template>` elements
+- conditional logic or loops
+- reading frontmatter inside templates
+
+---
+
+## 5. JavaScript boundary (progressive enhancement)
+
+JavaScript is optional and additive only. The site must remain readable and navigable with JavaScript disabled.
+
+Allowed:
+
+- navigation enhancements that swap already‑rendered HTML
+- theme, font size, or motion toggles
+- optional client‑side search over a build‑time index
+- minor UI helpers (copy buttons, toc highlights)
+
+Forbidden:
+
+- rendering Markdown or HTML at runtime
+- executing queries in the browser
+- filtering or ordering content client‑side
+- deciding what content exists
+
+If JavaScript fails to load, the site must still be complete.
 - `summary` and `summary-list` render a built-in summary block
 
 ---

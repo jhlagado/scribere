@@ -1,6 +1,6 @@
 ---
 name: article-authoring
-description: Write, edit, and structure Semantic Scroll articles in `content/**/article.md`. Use when asked to create a new article, revise prose, adjust frontmatter (title/summary/tags/series/status), add assets and captions, or fix lint issues while following `docs/authoring.md` and article specs.
+description: Write, edit, and structure Scribere articles in `content/**/article.md`. Use when asked to create a new article, revise prose, adjust frontmatter (title/summary/tags/series/status), add assets and captions, or fix lint issues while following `docs/authoring.md` and `docs/article.md`.
 ---
 
 # Article Authoring
@@ -11,10 +11,10 @@ This skill guides article creation and revision so the writing matches the proje
 
 ## Workflow
 
-Start by reading the relevant specs: `docs/authoring.md`, `docs/article-spec.md`, and `docs/articles-frontmatter.md`. If the request affects templates or indexing, check `docs/templating.md` and `docs/queries.md` as well.
+Start by reading the relevant specs: `docs/authoring.md` and `docs/article.md`. If the request affects templates or indexing, check `docs/templating.md` and `docs/queries.md` as well.
 Before making any changes, read `AGENTS.md` and follow it. It is the mandatory entry point for work in this repository.
 
-When creating a new article, use `npm run new` to generate the `content/YYYY/MM/DD/NN-slug/` folder and the initial `article.md`. If you already have a draft body, pipe it in with `npm run new < draft.md`. Use the body title as the source of truth for the folder name and frontmatter title, and keep the summary aligned with the intent in `docs/intent.md` when it exists.
+When creating a new article, use `npm run new` to generate the `content/YYYY/MM/DD/NN-slug/` folder and the initial `article.md`. If you already have a draft body, pipe it in with `npm run new < draft.md`. Use the body title as the source of truth for the folder name and frontmatter title, and keep the summary aligned with the article’s intent and audience.
 
 When updating title, status, tags, or series, use `npm run edit` and follow the prompts. You can also pass an article path or published URL. If you want to replace the body, pipe it in with `npm run edit < updated-body.md` so the frontmatter and path remain stable.
 

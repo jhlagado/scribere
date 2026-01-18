@@ -1,179 +1,26 @@
-# Blog Architecture & Design Decisions
+# Query Specification
 
-This document records the architectural and design decisions for the AI-assisted blog system.
-It is derived from `docs/PRD.md` and is **normative**: if future work conflicts with this document, the future work is wrong unless this document is explicitly updated.
+Queries are the **only** selection mechanism in Scribere. Templates never decide what exists; queries select records, and templates stamp them into HTML.
 
-The system prioritises clarity, durability, classic web principles, and strict separation of concerns.
-
----
-
-## 1. Core Philosophy
-
-- The system is **content-first**, not tool-first.
-- AI agents are treated as **experts**, not junior developers.
-- Tooling exists to standardize and automate, **not** to compensate for lack of skill.
-- We favor **first-principles implementations** when the problem is simple and bounded.
-- External dependencies are allowed **only** when they provide clear, non-trivial value.
-- Default assumption is zero or near-zero operating cost; static hosting is preferred; paid services require explicit justification and long-term maintenance cost must be considered.
-- Avoid frameworks, DSL sprawl, and Turing-complete template systems.
-
-This is a deliberately _boring_, _legible_, _durable_ web system.
-
-### 1.1 Self-Documenting Build
-
-The first published content series should document the construction of the system itself. Series are declared in frontmatter, so the build log can be explicit without adding extra registry files.
-
-- Each architectural decision should be representable as a post.
-- Spec documents should map cleanly to publishable narratives.
+This document defines the query schema, how queries are stored, and the required built‑ins.
 
 ---
 
-## 2. Canonical Repository Taxonomy
+## 1. Storage and ownership
 
-### 2.1 Blog Content Layout (Non-Negotiable)
-
-The canonical structure is:
+Queries live in the instance folder at:
 
 ```
-content/YYYY/MM/DD/NN-slug/<files>
+content/queries.json
 ```
 
-Scribere uses `/content/` as the live instance root. If `/content/` is missing, the engine falls back to `/example/` for the bundled reference site.
-
-Where:
-
-- `YYYY` = 4-digit year
-- `MM` = 2-digit month, **leading zero required**
-- `DD` = 2-digit day, **leading zero required**
-- `NN-slug` = leaf directory with a 2-digit ordinal prefix followed by a human-readable slug
-
-### 2.2 Article Example
-
-```
-content/2026/01/08/01-first-post/
-  article.md
-  assets/
-    diagram.png
-```
-
-### 2.3 Ordinal Rules
-
-- `NN` determines ordering _within a day_.
-- `NN` **must match** the numeric prefix of the `NN-slug` directory.
-- This ordering is for filesystem sanity and human inspection.
-- Authoritative ordering can always be reconstructed from metadata.
-
-### 2.4 Canonical URL Ownership
-
-Output URLs are owned by the filesystem layout and template mapping.
-
-- slugs are durable identifiers
-- changing a slug is a deliberate migration
-- redirects, if required, must be explicitly authored
-
-The system must never silently rewrite or infer redirects.
+Queries are instance‑owned. The build reads only from `content/queries.json` and fails if it is missing.
 
 ---
 
-## 3. Article Structure
+## 2. Query object schema
 
-Each article directory contains:
-
-- one primary Markdown file named `article.md`
-- optional `assets/` directory for images, code, PDFs, and other media
-
-Assets are **co-located** with articles, but they live inside the `assets/` subdirectory so the article root stays clean and predictable. Aside from `article.md`, the root directory should not contain other files.
-
----
-
-## 4. Metadata vs Published Content
-
-### 4.1 Frontmatter Metadata
-
-Frontmatter exists **only** to support:
-
-- discovery
-- indexing
-- querying
-- build-time decisions
-- summary rendering in built-in views
-
-Templates do not access metadata. Full article rendering uses only Markdown bodies. Summary views are a built-in render mode that may use frontmatter fields.
-
-### 4.2 Published Content Rule
-
-If a field is visible on a full article page (date, tag, label, etc.):
-
-- it **must exist in the Markdown body**
-- even if it also exists in metadata
-
-Summary and index views are a controlled exception: they may render frontmatter values using the built-in summary renderer.
-
----
-
-## 5. Templates
-
-### 5.1 Template Language
-
-- Templates are written in **plain, valid HTML**
-- No curly-brace syntax
-- No embedded logic
-- No access to metadata
-- No conditionals or loops
-
-Templates define **structure only**.
-
-### 5.2 Use of `<template>`
-
-- HTML `<template>` elements are used as **inert placeholders**
-- They are legal anywhere in the document
-- Their contents are not rendered by default
-
-This is preferred over `<div>` because it is:
-
-- semantically inert
-- explicit in intent
-- safe from accidental rendering
-
----
-
-## 6. Query-Driven Rendering Model
-
-### 6.1 Concept
-
-Rendering is driven by **named queries**.
-
-Templates do not decide _what_ to render.
-Queries decide _what exists_.
-
-Templates only decide _how it looks_.
-
-### 6.2 Template–Query Link
-
-Templates reference queries by name:
-
-```html
-<template data-query="latest-posts"></template>
-```
-
-Templates never embed query logic.
-
----
-
-## 7. Query System
-
-### 7.1 Storage Format
-
-- Queries are stored as **JSON-compatible data structures** in the system configuration.
-- Example location:
-
-  ```
-  content/queries.json
-  ```
-
-Queries are instance-owned. The build loads `content/queries.json` and does not fall back to a root copy.
-
-### 7.2 Example
+Each query is a JSON object keyed by name:
 
 ```json
 {
@@ -181,181 +28,84 @@ Queries are instance-owned. The build loads `content/queries.json` and does not 
     "source": "blog",
     "status": "published",
     "sort": "date-desc",
-    "limit": 10
+    "limit": 25
   }
 }
 ```
 
-Templates only ever reference `"latest-posts"`.
+Allowed fields:
 
----
+- `source` (required): `blog`
+- `status`: one of `draft`, `review`, `published`, `archived`
+- `tag`: a single tag value
+- `series`: a single series value
+- `year`, `month`, `day`: exact match values
+- `ordinal`: exact match value
+- `sort`: `date-asc`, `date-desc`, `ordinal-asc`, `ordinal-desc`
+- `limit`: integer limit
 
-## 8. Query Capabilities
+### Equality rules
 
-### 8.1 Equality Matching
+All filters are exact match with AND semantics. Month and day may be zero‑padded strings or integers as long as they resolve to the same numeric value.
 
-Allowed for:
+### Range rules
 
-- `status`
-- `tag` (set membership)
-- `series` (exact match)
-- `year`
-- `month`
-- `day`
-
-Exact match only.
-AND semantics only.
-
-Month and day values are normalized to integers before comparison. The filesystem uses zero-padded segments, but queries may use numeric values or zero-padded strings as long as they normalize to the same integer.
-
----
-
-### 8.2 Numeric Ranges
-
-Ranges are allowed **only** for numeric/date-like fields.
-
-Range notation is **explicit objects**, not expressions:
+Ranges are allowed only for numeric/date fields and are expressed as objects:
 
 ```json
 "day": { "from": 1, "to": 7 }
-"ordinal": { "from": 1, "to": 3 }
 ```
 
-Rules:
-
-- inclusive
-- both endpoints required
-- no open-ended ranges
-- no `<`, `>`, `<=`, `>=`
-
 ---
 
-### 8.3 Sorting
+## 3. Required built‑in queries
 
-Allowed values only:
+The system must define these names, even if templates don’t use them yet.
 
-- `date-asc`
-- `date-desc`
-- `ordinal-asc`
-- `ordinal-desc`
-
-One sort key only.
-
----
-
-### 8.4 Limiting
+### `latest-posts`
+Most recent published articles.
 
 ```json
-"limit": 10
+{ "source": "blog", "status": "published", "sort": "date-desc", "limit": 25 }
 ```
 
-- hard truncation
-- no offset
-- no pagination
+### `all-published-posts`
+All published articles in chronological order.
+
+```json
+{ "source": "blog", "status": "published", "sort": "date-asc" }
+```
+
+### `posts-by-day`
+All published posts for a specific day.
+
+```json
+{ "source": "blog", "status": "published", "year": "<YYYY>", "month": "<MM>", "day": "<DD>", "sort": "ordinal-asc" }
+```
+
+### `posts-by-tag`
+All published posts for a tag (newest first).
+
+```json
+{ "source": "blog", "status": "published", "tag": "<tag>", "sort": "date-desc" }
+```
+
+### `posts-by-series`
+All published posts in a series (oldest first).
+
+```json
+{ "source": "blog", "status": "published", "series": "<series>", "sort": "date-asc" }
+```
 
 ---
 
-## 9. Forbidden Query Features
+## 4. Recommended built‑ins
 
-Queries must **never** support:
+These are optional but strongly encouraged for navigation and archives:
 
-- boolean logic
-- OR conditions
-- nested expressions
-- functions
-- computed fields
-- template inspection
-- markdown body access
-- filesystem-order dependence
+- `posts-by-month`
+- `posts-by-year`
+- `all-tags`
+- `all-series`
 
-If a requirement cannot be expressed, a **new query** or **new index page** is required.
-
----
-
-## 10. Query Evaluation Order
-
-Queries are evaluated in a fixed, mechanical pipeline:
-
-1. filesystem discovery
-2. metadata read
-3. filtering
-4. sorting
-5. limiting
-
-Markdown bodies are read **only after** query resolution.
-
----
-
-## 11. Rendering Semantics
-
-For a given `<template data-query="X">`:
-
-- zero results → render template body as fallback message
-- one result → replace template body once
-- N results → repeat template body N times, in order
-
-Injected content is **HTML converted from Markdown**.
-
----
-
-## 12. Toolchain Policy
-
-- Prefer custom scripts over frameworks
-- Avoid ESLint, TypeScript, heavy build systems
-- AI performs code hygiene
-- Dependencies allowed only for:
-
-  - non-trivial correctness
-  - non-trivial optimisation (e.g. minification)
-
-Core pipeline must remain inspectable and boring.
-
----
-
-## 13. Relationship to Existing Systems
-
-This system is **not** Eleventy, Hugo, Jekyll, or React:
-
-- metadata is not used in templates
-- templates are not programming languages
-- queries are centralized and named
-- rendering is document stamping, not component evaluation
-
-This is closer to:
-
-- classic publishing pipelines
-- relational views
-- static document assembly
-
----
-
-## 14. Design Invariants
-
-These must never erode:
-
-- templates stay dumb
-- queries stay declarative
-- metadata appears only in summary views and fixed article metadata blocks
-- folder taxonomy remains stable
-- filesystem order always makes sense to a human, but traversal order has no semantic meaning
-
-If behaviour matters, it must be specified explicitly. No smart defaults or silent guessing.
-
----
-
-## 15. Forward References
-
-The system permits forward references during authoring.
-
-- Queries may reference tags or dates that do not yet exist.
-- Templates may reference queries that currently resolve to zero results.
-
-These conditions must produce warnings, not build failures. Forward references become active automatically once matching content exists.
-
----
-
-## 16. Status
-
-All decisions in this document are **locked** unless explicitly revised.
-
-Future work must conform to this design, not reinterpret it.
+Keep the names stable. If you want a new view, add a new query and a template rather than overloading an existing name.
