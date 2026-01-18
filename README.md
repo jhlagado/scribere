@@ -114,7 +114,7 @@ If you want a custom domain later, set it up in three short steps:
 Then update your local blog so all links, feeds, and sitemaps use the custom domain:
 
 ```sh
-npm run domain -- my-blog.com
+npm run domain
 ```
 
-This updates `content/site.json` with the new `siteUrl` and `customDomain`.
+Scribere will ask for your custom domain and update `content/site.json` with the new `siteUrl` and `customDomain`.

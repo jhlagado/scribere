@@ -23,7 +23,7 @@ For local work, use `npm start` to build, serve, and watch. This writes the lint
 If a site switches to a custom domain, update `content/site.json` with:
 
 ```
-npm run domain -- your-domain.com
+npm run domain
 ```
 
 Instance ownership is strict: templates, assets, client JS, content, and instance queries live under `/content/` in the instance repo. Engine scripts stay at the repo root. Avoid moving templates into the engine unless explicitly requested.
