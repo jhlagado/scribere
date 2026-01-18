@@ -139,6 +139,16 @@ async function main() {
     throw new Error("Missing /content. Run setup first.");
   }
 
+  const title = await promptRequired("Title");
+  const slugDefault = slugify(title) || "new-article";
+  let slug = await prompt("Slug", slugDefault);
+  slug = slugify(slug) || slugDefault;
+
+  if (slug.length > MAX_SLUG_LENGTH) {
+    console.warn(`[new] Slug trimmed to ${MAX_SLUG_LENGTH} characters.`);
+    slug = slug.slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, "");
+  }
+
   const today = new Date();
   const todayValue = `${today.getFullYear()}-${pad2(today.getMonth() + 1)}-${pad2(today.getDate())}`;
 
@@ -150,16 +160,6 @@ async function main() {
     parsedDate = parseDateInput(dateInput);
   }
 
-  const title = await promptRequired("Title");
-  const slugDefault = slugify(title) || "new-article";
-  let slug = await prompt("Slug", slugDefault);
-  slug = slugify(slug) || slugDefault;
-
-  if (slug.length > MAX_SLUG_LENGTH) {
-    console.warn(`[new] Slug trimmed to ${MAX_SLUG_LENGTH} characters.`);
-    slug = slug.slice(0, MAX_SLUG_LENGTH).replace(/-+$/g, "");
-  }
-
   let status = await prompt("Status (draft/review/published/archived)", "draft");
   status = status.toLowerCase();
   if (!STATUS_VALUES.has(status)) {
@@ -167,9 +167,9 @@ async function main() {
     status = "draft";
   }
 
-  const summary = await prompt("Summary (optional, two sentences)", "");
-  const series = await prompt("Series (optional)", "");
   const tagsInput = await prompt("Tags (comma-separated, optional)", "");
+  const series = await prompt("Series (optional)", "");
+  const summary = await prompt("Summary (optional, two sentences)", "");
 
   const tags = tagsInput
     .split(",")
@@ -208,7 +208,8 @@ async function main() {
   fs.writeFileSync(path.join(articleDir, "article.md"), `${frontmatter}\n${body}`);
 
   console.log("\n[new] Article created:");
-  console.log(articleDir);
+  console.log(`- Ordinal slug: ${leaf}`);
+  console.log(`- File: ${path.join(articleDir, "article.md")}`);
 }
 
 main()
