@@ -29,7 +29,6 @@ Answer the questions. Press Enter to accept the defaults. It will look like this
 ```
 Git remote HTTPS URL: https://github.com/my-user-id/my-big-blog.git
 Project folder [my-big-blog]:
-Repository name [my-big-blog]:
 Site name [My Big Blog]:
 Site description [A personal blog built with Scribere.]:
 Site URL [https://my-user-id.github.io/my-big-blog]:
