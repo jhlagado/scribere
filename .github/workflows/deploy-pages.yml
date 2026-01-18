@@ -27,10 +27,17 @@ jobs:
           cache: "npm"
       - name: Install
         run: npm ci
+      - name: Set site URL
+        run: |
+          REPO="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$REPO" = "${OWNER}.github.io" ]; then
+            echo "SITE_URL=https://${OWNER}.github.io" >> "$GITHUB_ENV"
+          else
+            echo "SITE_URL=https://${OWNER}.github.io/${REPO}" >> "$GITHUB_ENV"
+          fi
       - name: Build
         run: npm run build
-        env:
-          SITE_URL: https://example.com
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
