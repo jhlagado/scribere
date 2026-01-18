@@ -273,9 +273,15 @@ async function main() {
     console.log("[init] No git remote found. Add origin and push when ready.");
   }
 
+  const relativePath = path.relative(ROOT, targetRoot);
+  const displayPath =
+    relativePath && !relativePath.startsWith("..") && !path.isAbsolute(relativePath)
+      ? relativePath
+      : targetRoot;
+
   console.log("\nSetup complete.");
   console.log(`- Folder: ${targetRoot}`);
-  console.log(`- Next:\n  cd ${targetRoot}\n  npm start`);
+  console.log(`- Next:\n  cd ${displayPath}\n  npm start`);
 }
 
 main()
