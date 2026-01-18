@@ -23,11 +23,14 @@ if (lintResult.status !== 0) {
   console.log("[lint] issues (non-blocking)");
 }
 
+const host = process.env.HOST || "127.0.0.1";
 const buildEnv = {
   ...process.env,
   INCREMENTAL: "1",
   SOFT_FAIL: "1",
   LINT_REPORT_PATH: "temp/lint-report.json",
+  SITE_URL: `http://${host}:8000`,
+  BASE_PATH: "",
 };
 
 const buildResult = spawnSync(process.execPath, [buildScript], {
