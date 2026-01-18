@@ -70,7 +70,7 @@ const resolveFromUrl = (value) => {
   let relPath = null;
   if (pathname.includes("/content/")) {
     relPath = pathname.split("/content/")[1];
-  } else if (pathname.match(/^\/?\\d{4}\\/\\d{2}\\/\\d{2}\\/\\d{2}-/)) {
+  } else if (pathname.match(/^\/?\d{4}\/\d{2}\/\d{2}\/\d{2}-/)) {
     relPath = pathname.replace(/^\\/+/, "");
   }
   if (!relPath) {
