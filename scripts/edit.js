@@ -71,12 +71,12 @@ const resolveFromUrl = (value) => {
   if (pathname.includes("/content/")) {
     relPath = pathname.split("/content/")[1];
   } else if (pathname.match(/^\/?\d{4}\/\d{2}\/\d{2}\/\d{2}-/)) {
-    relPath = pathname.replace(/^\\/+/, "");
+    relPath = pathname.replace(/^\/+/, "");
   }
   if (!relPath) {
     return null;
   }
-  relPath = relPath.replace(/\\/+$|\\/+$/, "");
+  relPath = relPath.replace(/^\/+|\/+$/g, "");
   if (!relPath.endsWith("article.md")) {
     relPath = path.join(relPath, "article.md");
   }
