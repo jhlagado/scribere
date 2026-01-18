@@ -171,7 +171,7 @@ async function main() {
   const parsedRemote = parseGitRemote(remoteUrl);
   const defaultFolder = parsedRemote?.repo || "my-blog";
   const projectFolder = await prompt("Project folder", defaultFolder);
-  const repoName = await prompt("Repository name", parsedRemote?.repo || path.basename(projectFolder));
+  const repoName = parsedRemote?.repo || path.basename(projectFolder) || "my-blog";
 
   const gitUser = runCapture("git", ["config", "--get", "user.name"], { cwd: ROOT });
   const authorDefault = parsedRemote?.owner || gitUser || "Your Name";
