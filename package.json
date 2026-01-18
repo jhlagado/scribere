@@ -9,6 +9,7 @@
     "build": "node scripts/build.js",
     "rebuild": "node scripts/rebuild.js",
     "new": "node scripts/new.js",
+    "edit": "node scripts/edit.js",
     "lint": "node scripts/prose-lint.js",
     "lint:code": "eslint .",
     "update": "node scripts/update.js",

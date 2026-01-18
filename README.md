@@ -59,6 +59,26 @@ npm run new
 
 Scribere will ask for the date, title, slug, status, and optional tags or series. It writes a new `content/YYYY/MM/DD/NN-slug/article.md` with the correct frontmatter and a starter body that includes the title and byline.
 
+If you already have a draft body, you can pipe it in:
+
+```sh
+npm run new < draft.md
+```
+
+### Edit an article
+
+To change the title, status, tags, or series later, run:
+
+```sh
+npm run edit
+```
+
+The script asks for the article path, then updates only the frontmatter fields. If you pipe in a new body, it replaces the body while keeping the frontmatter:
+
+```sh
+npm run edit < updated-body.md
+```
+
 ## Deploy on GitHub Pages
 
 To deploy, push the repo to GitHub (the setup step already commits and pushes). Then enable GitHub Pages:
