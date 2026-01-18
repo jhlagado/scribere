@@ -9,6 +9,6 @@ tags:
 # Welcome to Scribere
 By Example Author
 
-This is the example site that ships with the Scribere engine. It exists so you can run the build and see a real page without any extra setup. Replace these posts with your own writing once you are ready.
+This example site ships with the Scribere engine so you can run the build and view a real page immediately, without any extra setup. Use it as a working reference, then replace these posts with your own writing when you are ready.
 
-This system keeps content in dated folders and builds static pages from plain Markdown. If you delete this folder and add your own, the site will still work as long as you keep the same structure. The example is small on purpose so you can see how each piece fits.
+The system keeps content in dated folders and builds static pages from plain Markdown, which keeps the archive legible as it grows. If you remove these example posts but keep the same folder structure, the site will still build correctly and the templates will continue to work.
