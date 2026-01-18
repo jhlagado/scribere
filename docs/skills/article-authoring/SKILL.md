@@ -16,7 +16,7 @@ Before making any changes, read `AGENTS.md` and follow it. It is the mandatory e
 
 When creating a new article, use `npm run new` to generate the `content/YYYY/MM/DD/NN-slug/` folder and the initial `article.md`. If you already have a draft body, pipe it in with `npm run new < draft.md`. Use the body title as the source of truth for the folder name and frontmatter title, and keep the summary aligned with the intent in `docs/intent.md` when it exists.
 
-When updating title, status, tags, or series, use `npm run edit` and follow the prompts. If you want to replace the body, pipe it in with `npm run edit < updated-body.md` so the frontmatter and path remain stable.
+When updating title, status, tags, or series, use `npm run edit` and follow the prompts. You can also pass an article path or published URL. If you want to replace the body, pipe it in with `npm run edit < updated-body.md` so the frontmatter and path remain stable.
 
 When revising prose, keep paragraphs substantive, avoid contrast framing and rhetorical filler, and use UK/AU spelling. Preserve the author’s voice and focus on clarity, specificity, and readable structure, without introducing new jargon or template logic.
 

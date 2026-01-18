@@ -56,11 +56,44 @@ const normaliseTag = (value) => {
     .replace(/^-+|-+$/g, "");
 };
 
+const resolveFromUrl = (value) => {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  const pathname = decodeURIComponent(url.pathname || "");
+  if (!pathname) {
+    return null;
+  }
+  let relPath = null;
+  if (pathname.includes("/content/")) {
+    relPath = pathname.split("/content/")[1];
+  } else if (pathname.match(/^\/?\\d{4}\\/\\d{2}\\/\\d{2}\\/\\d{2}-/)) {
+    relPath = pathname.replace(/^\\/+/, "");
+  }
+  if (!relPath) {
+    return null;
+  }
+  relPath = relPath.replace(/\\/+$|\\/+$/, "");
+  if (!relPath.endsWith("article.md")) {
+    relPath = path.join(relPath, "article.md");
+  }
+  return path.join(CONTENT_ROOT, relPath);
+};
+
 const resolveArticlePath = (input) => {
   if (!input) {
     return null;
   }
   let candidate = input.trim();
+  if (candidate.startsWith("http://") || candidate.startsWith("https://")) {
+    const urlPath = resolveFromUrl(candidate);
+    if (urlPath) {
+      candidate = urlPath;
+    }
+  }
   if (!path.isAbsolute(candidate)) {
     candidate = path.join(ROOT, candidate);
   }
@@ -140,11 +173,12 @@ async function main() {
     throw new Error("Missing /content. Run setup first.");
   }
 
-  const inputPath = await promptRequired("Article path (article.md or folder)");
+  const cliArg = process.argv.slice(2).join(" ").trim();
+  const inputPath = cliArg || (await promptRequired("Article path, folder, or URL"));
   const articlePath = resolveArticlePath(inputPath);
 
   if (!articlePath) {
-    throw new Error("Article file not found. Provide a valid path under /content.");
+    throw new Error("Article file not found. Provide a path under /content or a published URL.");
   }
 
   const raw = fs.readFileSync(articlePath, "utf8");

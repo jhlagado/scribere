@@ -79,6 +79,13 @@ The script asks for the article path, then updates only the frontmatter fields. 
 npm run edit < updated-body.md
 ```
 
+You can also pass a path or URL directly:
+
+```sh
+npm run edit -- content/2026/01/12/01-sample/article.md
+npm run edit -- https://my-user-id.github.io/my-big-blog/content/2026/01/12/01-sample/
+```
+
 ## Deploy on GitHub Pages
 
 To deploy, push the repo to GitHub (the setup step already commits and pushes). Then enable GitHub Pages:
