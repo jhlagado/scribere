@@ -14,7 +14,7 @@ This skill guides article creation and revision so the writing matches the proje
 Start by reading the relevant specs: `docs/authoring.md`, `docs/article-spec.md`, and `docs/articles-frontmatter.md`. If the request affects templates or indexing, check `docs/templating.md` and `docs/queries.md` as well.
 Before making any changes, read `AGENTS.md` and follow it. It is the mandatory entry point for work in this repository.
 
-When creating a new article, create the folder at `content/YYYY/MM/DD/NN-slug/` and add a single `article.md` plus optional `assets/` beside it. Use the body title as the source of truth for the folder name and frontmatter title, and keep the summary aligned with the intent in `docs/intent.md` when it exists.
+When creating a new article, use `npm run new` to generate the `content/YYYY/MM/DD/NN-slug/` folder and the initial `article.md`. Use the body title as the source of truth for the folder name and frontmatter title, and keep the summary aligned with the intent in `docs/intent.md` when it exists.
 
 When revising prose, keep paragraphs substantive, avoid contrast framing and rhetorical filler, and use UK/AU spelling. Preserve the author’s voice and focus on clarity, specificity, and readable structure, without introducing new jargon or template logic.
 

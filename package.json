@@ -8,6 +8,7 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "rebuild": "node scripts/rebuild.js",
+    "new": "node scripts/new.js",
     "lint": "node scripts/prose-lint.js",
     "lint:code": "eslint .",
     "update": "node scripts/update.js",
