@@ -10,6 +10,7 @@
     "rebuild": "node scripts/rebuild.js",
     "new": "node scripts/new.js",
     "edit": "node scripts/edit.js",
+    "domain": "node scripts/domain.js",
     "lint": "node scripts/prose-lint.js",
     "lint:code": "eslint .",
     "update": "node scripts/update.js",

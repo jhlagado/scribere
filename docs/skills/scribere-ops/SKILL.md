@@ -20,6 +20,12 @@ For updates, run `npm run update`. This adds `upstream` if missing, fetches it, 
 
 For local work, use `npm start` to build, serve, and watch. This writes the lint report to `temp/lint-report.json` without blocking the dev server. Use `npm run build` for a clean one‑shot build, and `npm run lint -- --all` when a full lint sweep is needed.
 
+If a site switches to a custom domain, update `content/site.json` with:
+
+```
+npm run domain -- your-domain.com
+```
+
 Instance ownership is strict: templates, assets, client JS, content, and instance queries live under `/content/` in the instance repo. Engine scripts stay at the repo root. Avoid moving templates into the engine unless explicitly requested.
 
 ## Output checks
