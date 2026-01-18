@@ -52,6 +52,18 @@ npm run new < draft.md
 npm run edit < updated-body.md
 ```
 
+Find articles from the command line:
+
+```sh
+npm run find -- "search term"
+```
+
+You can also filter by status or cap the result count:
+
+```sh
+npm run find -- "templating" --status draft --limit 10
+```
+
 ---
 
 ## Custom domain

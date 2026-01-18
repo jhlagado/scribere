@@ -91,6 +91,20 @@ npm run edit -- content/2026/01/12/01-sample/article.md
 npm run edit -- https://my-user-id.github.io/my-big-blog/content/2026/01/12/01-sample/
 ```
 
+### Find an article
+
+Use the find command to search titles, summaries, tags, and paths:
+
+```sh
+npm run find -- "templating"
+```
+
+You can filter by status or limit the results:
+
+```sh
+npm run find -- "templating" --status draft --limit 10
+```
+
 ### Check or rebuild manually
 
 If you want a manual check outside the dev loop:

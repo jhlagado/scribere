@@ -13,6 +13,7 @@ const REQUIRED_SCRIPTS = {
   rebuild: "node node_modules/scribere/scripts/rebuild.js",
   new: "node node_modules/scribere/scripts/new.js",
   edit: "node node_modules/scribere/scripts/edit.js",
+  find: "node node_modules/scribere/scripts/find.js",
   domain: "node node_modules/scribere/scripts/domain.js",
   lint: "node node_modules/scribere/scripts/prose-lint.js",
   update: "node node_modules/scribere/scripts/update.js",
