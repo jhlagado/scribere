@@ -86,6 +86,12 @@ Manual lint:
 npm run lint
 ```
 
+To lint docs and other Markdown outside the article store:
+
+```sh
+npm run lint -- --docs
+```
+
 Manual build:
 
 ```sh

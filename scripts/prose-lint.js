@@ -536,7 +536,7 @@ const args = process.argv.slice(2);
 const includePublished = args.includes('--all') || args.includes('--include-published');
 const strict = args.includes('--strict');
 const gate = args.includes('--gate') || args.includes('--ci');
-const includeDocs = args.includes('--docs') || args.includes('--all');
+const includeDocs = args.includes('--docs');
 const reportPath = resolveReportPath(args);
 const thresholds = resolveThresholds(args);
 const targets = extractTargets(args);
@@ -563,7 +563,8 @@ function main() {
   for (const filePath of files) {
     const raw = fs.readFileSync(filePath, 'utf8');
     const parsed = parseFrontmatter(raw);
-    const isArticle = path.basename(filePath) === 'article.md';
+    const isArticle = path.basename(filePath) === 'article.md'
+      && filePath.startsWith(`${DEFAULT_ROOT}${path.sep}`);
     if (!parsed && isArticle) {
       reports.push({
         filePath,
