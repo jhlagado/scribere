@@ -82,6 +82,13 @@ const server = http.createServer((req, res) => {
       res.setHeader('Content-Type', type);
 
       const stream = fs.createReadStream(target);
+      const cleanup = () => {
+        if (!stream.destroyed) {
+          stream.destroy();
+        }
+      };
+      req.on('aborted', cleanup);
+      res.on('close', cleanup);
       stream.on('error', () => {
         res.statusCode = 500;
         res.end('Server error');
