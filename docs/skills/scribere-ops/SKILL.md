@@ -11,12 +11,12 @@ This skill covers day‑to‑day operations for Scribere and the Semantic Scroll
 
 ## Workflow
 
-Confirm which repo is in scope (`scribere` engine or `semantic-scroll` instance), then read `AGENTS.md` and the relevant specs (`docs/PRD.md`, `docs/templating.md`, `docs/queries.md`, `docs/ci-pipeline.md`) before proposing changes.
+Confirm which repo is in scope (`scribere` engine or an instance), then read `AGENTS.md` and the relevant specs (`docs/build.md`, `docs/ops.md`, `docs/templating.md`, `docs/queries.md`) before proposing changes.
 Treat `AGENTS.md` as mandatory. It is the entry point for any work in this repo and must be followed throughout.
 
 For first‑time setup, use `npx --yes github:jhlagado/scribere#main` in a fresh folder. This creates the repo, installs Scribere, and copies `/example/` into `/content/`. Do not re‑copy content if `/content/` already exists.
 
-For updates, run `npm run update`. This adds `upstream` if missing, fetches it, and merges `upstream/main`. If the merge fails due to unrelated histories, stop and ask before applying a one‑time `--allow-unrelated-histories` merge.
+For updates, run `npm run update`. This refreshes the Scribere dependency, syncs the required npm scripts, and ensures `.gitignore` and `AGENTS.md` match current defaults.
 
 For local work, use `npm start` to build, serve, and watch. This writes the lint report to `temp/lint-report.json` without blocking the dev server. Use `npm run build` for a clean one‑shot build, and `npm run lint -- --all` when a full lint sweep is needed.
 
