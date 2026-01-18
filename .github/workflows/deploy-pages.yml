@@ -29,6 +29,10 @@ jobs:
         run: npm ci
       - name: Set site URL
         run: |
+          if [ -f content/site.json ]; then
+            echo "SITE_URL is defined in content/site.json"
+            exit 0
+          fi
           REPO="${{ github.event.repository.name }}"
           OWNER="${{ github.repository_owner }}"
           if [ "$REPO" = "${OWNER}.github.io" ]; then
