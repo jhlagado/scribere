@@ -2659,7 +2659,8 @@ function renderMarkdownSection(lines, basePath) {
     codeLang = '';
   }
 
-  for (const line of lines) {
+  for (let lineIdx = 0; lineIdx < lines.length; lineIdx += 1) {
+    const line = lines[lineIdx];
     const trimmed = line.trim();
 
     const captionMatch = pendingCodeBlock ? trimmed.match(/^@@Caption:\s*(.+)$/) : null;
@@ -2700,6 +2701,43 @@ function renderMarkdownSection(lines, basePath) {
       const level = headingMatch[1].length;
       const text = headingMatch[2].trim();
       html += `<h${level}>${renderInline(text)}</h${level}>\n`;
+      continue;
+    }
+
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      flushParagraph();
+      const tableLines = [trimmed];
+      while (lineIdx + 1 < lines.length) {
+        const nextLine = lines[lineIdx + 1].trim();
+        if (nextLine.startsWith('|') && nextLine.endsWith('|')) {
+          tableLines.push(nextLine);
+          lineIdx += 1;
+          continue;
+        }
+        break;
+      }
+      if (tableLines.length < 2) {
+        paragraph.push(trimmed);
+        continue;
+      }
+      const parseRow = (row) => row.slice(1, -1).split('|').map((cell) => cell.trim());
+      const headerCells = parseRow(tableLines[0]);
+      const isSeparator = /^[|\s:-]+$/.test(tableLines[1]);
+      const dataStartIdx = isSeparator ? 2 : 1;
+      html += '<table>\n<thead>\n<tr>';
+      for (const cell of headerCells) {
+        html += `<th>${renderInline(cell)}</th>`;
+      }
+      html += '</tr>\n</thead>\n<tbody>\n';
+      for (let i = dataStartIdx; i < tableLines.length; i += 1) {
+        const cells = parseRow(tableLines[i]);
+        html += '<tr>';
+        for (const cell of cells) {
+          html += `<td>${renderInline(cell)}</td>`;
+        }
+        html += '</tr>\n';
+      }
+      html += '</tbody>\n</table>\n';
       continue;
     }
 
