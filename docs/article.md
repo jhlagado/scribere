@@ -103,6 +103,16 @@ If a fenced code block is followed immediately by a line that begins with `@@Cap
 @@Caption: Short posts I want to surface on the home page.
 ````
 
+### Tables
+
+Scribere supports simple Markdown tables using pipe syntax. Each row must start and end with `|`, the first row is treated as a header, and the second row may be a separator line made of dashes. Inline Markdown such as backticks is rendered inside cells.
+
+```markdown
+| Range | Type | Notes |
+|-------|------|-------|
+| 0x0000–0x07FF | RAM | Shadow region |
+```
+
 ### Fold marker
 
 A line containing `@@Fold` splits the article. Everything after the marker is wrapped in a `<details class="article-fold">` element. You can customise the summary text with `@@Fold: Continue reading`.
