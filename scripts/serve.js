@@ -9,6 +9,7 @@ const BASE_DIR = path.resolve(ROOT, 'build');
 const PORT = Number(process.env.PORT || 8000);
 const HOST = process.env.HOST || '0.0.0.0';
 const RELOAD_PATH = '/__reload';
+const MAX_PORT_SEARCH = 50;
 const clients = new Set();
 let reloadTimer = null;
 
@@ -98,6 +99,33 @@ const server = http.createServer((req, res) => {
   });
 });
 
+function listenWithFallback(serverInstance, host, startPort, maxAttempts, callback) {
+  let attempt = 0;
+
+  function tryListen(port) {
+    const onError = (error) => {
+      serverInstance.off('listening', onListening);
+      if (error && error.code === 'EADDRINUSE' && attempt < maxAttempts) {
+        attempt += 1;
+        tryListen(startPort + attempt);
+        return;
+      }
+      throw error;
+    };
+
+    const onListening = () => {
+      serverInstance.off('error', onError);
+      callback(port, attempt > 0);
+    };
+
+    serverInstance.once('error', onError);
+    serverInstance.once('listening', onListening);
+    serverInstance.listen(port, host);
+  }
+
+  tryListen(startPort);
+}
+
 function broadcastReload() {
   for (const client of clients) {
     client.write('data: reload\n\n');
@@ -119,7 +147,10 @@ if (fs.existsSync(BASE_DIR)) {
   });
 }
 
-server.listen(PORT, HOST, () => {
+listenWithFallback(server, HOST, PORT, MAX_PORT_SEARCH, (resolvedPort, usedFallback) => {
   const displayHost = HOST === '0.0.0.0' ? 'localhost' : HOST;
-  console.log(`[srv] running at http://${displayHost}:${PORT}`);
+  if (usedFallback) {
+    console.log(`[srv] port ${PORT} unavailable, using ${resolvedPort}`);
+  }
+  console.log(`[srv] running at http://${displayHost}:${resolvedPort}`);
 });
