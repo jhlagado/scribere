@@ -597,6 +597,10 @@ function main() {
       skipped += 1;
       continue;
     }
+    if (isArticle && isProseLintDisabled(normalized.frontmatter)) {
+      skipped += 1;
+      continue;
+    }
 
     checked += 1;
     const result = lintDocument(filePath, normalized, { isArticle });
@@ -1411,6 +1415,18 @@ function stripQuotes(value) {
     return value.slice(1, -1);
   }
   return value;
+}
+
+function isProseLintDisabled(frontmatter) {
+  if (!frontmatter || typeof frontmatter !== 'object') {
+    return false;
+  }
+  const value = frontmatter.prose_lint ?? frontmatter.proseLint;
+  if (typeof value === 'boolean') {
+    return value === false;
+  }
+  const normalized = String(value || '').trim().toLowerCase();
+  return ['false', 'off', 'skip', 'disabled', 'no'].includes(normalized);
 }
 
 function addIssue(issues, { line, weight, message, severity }) {
