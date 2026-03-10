@@ -49,6 +49,7 @@ npm start
 This runs the lint report, builds the site, starts the local server, and rebuilds on changes in `content/`, `example/`, and `config/`. By default the dev server binds to `127.0.0.1`; set `HOST=0.0.0.0` if you need to reach it from another device, and override the port with `PORT=xxxx` if needed.
 
 The dev loop prints a short status line when lint and build succeed. Lint issues are reported without stopping the server.
+If the requested port is already in use, the local server now tries the next available port and prints the selected URL.
 
 If you want the dev loop without prose lint noise, run:
 
