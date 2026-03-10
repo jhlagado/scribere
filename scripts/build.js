@@ -2622,8 +2622,14 @@ function renderMarkdownSection(lines, basePath) {
     if (!paragraph.length) {
       return;
     }
+    const rawText = paragraph.join('\n').trim();
     const text = paragraph.join(' ').trim();
     if (!text) {
+      paragraph = [];
+      return;
+    }
+    if (isRawHtmlBlock(rawText)) {
+      html += `${rawText}\n`;
       paragraph = [];
       return;
     }
@@ -2760,6 +2766,10 @@ function renderMarkdownSection(lines, basePath) {
 
   flushParagraph();
   return html;
+}
+
+function isRawHtmlBlock(text) {
+  return /^<([A-Za-z][^>\s/]*|![A-Za-z][^>]*|\/[A-Za-z][^>]*)[\s\S]*>$/.test(text);
 }
 
 function resolveAssetPath(src, basePath) {
