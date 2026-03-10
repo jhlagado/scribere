@@ -78,6 +78,8 @@ It only prints output when it finds issues.
 
 Rules, thresholds, and metrics live in `config/prose-lint.json`. You can disable a rule by setting `"enabled": false`. CLI flags still override config values.
 
+For article-level exceptions, set `prose_lint: false` in the article frontmatter. The linter skips that file entirely. This is useful for embed-heavy Markdown where raw HTML dominates the body.
+
 ```sh
 npm run lint
 ```

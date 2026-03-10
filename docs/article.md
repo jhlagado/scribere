@@ -51,6 +51,7 @@ tags:
   - publishing
 series: templating
 thumbnail: assets/thumbnail.jpg
+prose_lint: false
 ```
 
 Rules:
@@ -58,6 +59,7 @@ Rules:
 - `title` and `summary` may differ from the Markdown body title.
 - `summary` should be at least two sentences and use plain language.
 - `thumbnail` must point to a file inside the article’s `assets/` folder.
+- `prose_lint: false` skips prose lint for that article. Use it sparingly for HTML-heavy or embed-heavy posts where prose rules do not fit the source.
 - `tags` are a flat list; order does not matter.
 - `series` is a single value.
 
