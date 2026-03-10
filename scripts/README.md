@@ -50,6 +50,14 @@ This runs the lint report, builds the site, starts the local server, and rebuild
 
 The dev loop prints a short status line when lint and build succeed. Lint issues are reported without stopping the server.
 
+If you want the dev loop without prose lint noise, run:
+
+```sh
+SKIP_PROSE_LINT=1 npm start
+```
+
+This still writes an empty lint report so draft articles remain visible in preview.
+
 Local development runs in incremental mode. The build caches frontmatter and derived metadata in `temp/index.json` so large archives do not require a full re-parse on every change. If you want to force a full scan, delete `temp/index.json` and rebuild.
 
 ## Publish changes
