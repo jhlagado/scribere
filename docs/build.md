@@ -23,6 +23,8 @@ The pipeline optimises for two different contexts:
 4. **Rendering**: stamp query results into templates.
 5. **Outputs**: write HTML pages, feeds, sitemap, robots, and CNAME (if needed).
 
+The home page renders the `latest-posts` query through the built-in summary view. Full Markdown bodies remain exclusive to their article permalinks. Article pages receive contextual previous and next query results drawn from the published chronology.
+
 ---
 
 ## 3. Local development

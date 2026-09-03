@@ -300,12 +300,12 @@ Title and summary support a minimal inline Markdown subset: bold, italic, and in
 Summary block:
 
 ```html
-<article class="summary">
+<article class="summary" data-primary-tag="example-tag">
   <header class="summary-header">
     <h2 class="summary-title">
       <a href="/content/YYYY/MM/DD/NN-slug/">Title</a>
     </h2>
-    <time class="summary-date" datetime="YYYY-MM-DD">YYYY-MM-DD</time>
+    <time class="summary-date" datetime="YYYY-MM-DD">D Month YYYY</time>
   </header>
   <figure class="summary-thumb">
     <img src="assets/thumbnail.jpg" alt="Title" />
@@ -328,6 +328,8 @@ Summary list item:
 
 Elements are omitted when their values are missing (for example, no `<figure>` when `thumbnail` is absent). The `<dl>` structure keeps metadata visible but easily hidden via CSS.
 
+Summary dates are formatted using the instance language from `content/site.json`; the machine-readable `datetime` attribute always remains ISO `YYYY-MM-DD`. When tags exist, `data-primary-tag` contains the normalized first tag. This lets an instance give broad topics distinct visual treatments without putting metadata logic into its templates.
+
 ---
 
 ### 3.5 Article Metadata Blocks
@@ -337,6 +339,8 @@ Full article pages may include metadata blocks above and below the Markdown body
 The top block renders a date line that links to the article permalink and a series line when a series is present. The bottom block renders a tag list when tags are present.
 
 The blocks are omitted when they would be empty, and they are the only full-article exceptions that render frontmatter.
+
+Article templates may also use the contextual internal queries `article-previous` and `article-next`. They contain the immediately earlier and later published articles in chronological order. These queries are intended for static article navigation and may use the normal `summary` render mode. At either end of the journal, the template fallback is rendered.
 
 ---
 
