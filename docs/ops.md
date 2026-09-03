@@ -16,7 +16,7 @@ The dev server:
 
 - rebuilds on file changes
 - shows drafts
-- keeps the preview running even when lint warnings exist
+- reports structural warnings without stopping the preview
 
 ---
 
@@ -64,6 +64,12 @@ You can also filter by status or cap the result count:
 npm run find -- "templating" --status draft --limit 10
 ```
 
+## Unlisted drafts
+
+An instance can deploy draft and review permalinks without adding those articles to its public indexes. Its `article-pages` query must omit the `status` filter, while `latest-posts` and `all-published-posts` must continue to require `status: published`. The resulting URL is suitable for informal review, but it is not private or access-controlled.
+
+Publishing the article later requires one content change: set its frontmatter to `status: published`, rebuild, and run `npm run publish`. The journal, archives, tags, series, feeds, and sitemap then include it.
+
 ---
 
 ## Custom domain
@@ -78,19 +84,7 @@ This updates `content/site.json` so URLs, feeds, and sitemaps use the correct do
 
 ---
 
-## Lint and build
-
-Manual lint:
-
-```sh
-npm run lint
-```
-
-To lint docs and other Markdown outside the article store:
-
-```sh
-npm run lint -- --docs
-```
+## Build
 
 Manual build:
 
@@ -112,7 +106,7 @@ npm run rebuild
 npm run publish
 ```
 
-This runs lint (blocking only on high‑severity issues), stages changes, commits, and pushes to `origin`. GitHub Actions then builds and publishes the site.
+This stages changes, commits, and pushes to `origin`. GitHub Actions then builds and publishes the site. Prose review belongs in the authoring step and never blocks the mechanical publishing step.
 
 ---
 

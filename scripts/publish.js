@@ -2,11 +2,8 @@
 "use strict";
 
 const { spawnSync } = require("node:child_process");
-const path = require("node:path");
 
 const ROOT = process.cwd();
-const SCRIBERE_ROOT = path.resolve(__dirname, "..");
-const lintScript = path.join(SCRIBERE_ROOT, "scripts", "prose-lint.js");
 
 const runGit = (args, options = {}) => {
   const result = spawnSync("git", args, {
@@ -40,28 +37,6 @@ const readGitConfig = (key) => {
 
   return String(result.stdout || "").trim();
 };
-
-const lintResult = spawnSync(
-  process.execPath,
-  [
-    lintScript,
-    "--all",
-    "--gate",
-    "--max-high=0",
-    "--max-medium=999",
-    "--max-low=999",
-  ],
-  { stdio: "inherit", cwd: ROOT },
-);
-
-if (lintResult.error) {
-  throw lintResult.error;
-}
-
-if (lintResult.status !== 0) {
-  console.error("[publish] high-severity lint issues detected. Fix them before publishing.");
-  process.exit(lintResult.status ?? 1);
-}
 
 const authorName = readGitConfig("user.name");
 const authorEmail = readGitConfig("user.email");

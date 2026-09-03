@@ -13,7 +13,7 @@ function write(root, relativePath, contents) {
   fs.writeFileSync(target, contents);
 }
 
-function buildFixture() {
+function buildFixture({ includeUnpublishedPages = false, preview = false } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'scribere-build-'));
 
   write(root, 'content/site.json', JSON.stringify({
@@ -24,7 +24,9 @@ function buildFixture() {
     language: 'en-AU'
   }));
   write(root, 'content/queries.json', JSON.stringify({
-    'article-pages': { source: 'blog', status: 'published', sort: 'date-asc' },
+    'article-pages': includeUnpublishedPages
+      ? { source: 'blog', sort: 'date-asc' }
+      : { source: 'blog', status: 'published', sort: 'date-asc' },
     'latest-posts': { source: 'blog', status: 'published', sort: 'date-desc' },
     'all-published-posts': { source: 'blog', status: 'published', sort: 'date-asc' }
   }));
@@ -77,8 +79,26 @@ function buildFixture() {
     ''
   ].join('\n'));
   write(root, 'content/2026/03/04/01-second/assets/hero.png', 'fixture');
+  write(root, 'content/2026/03/05/01-draft/article.md', [
+    '---',
+    'status: draft',
+    'title: "Unlisted draft"',
+    'summary: "Draft summary."',
+    'tags:',
+    '  - notes',
+    '---',
+    '',
+    '# Unlisted draft',
+    '',
+    'DRAFT-BODY',
+    ''
+  ].join('\n'));
 
-  execFileSync(process.execPath, [buildScript], { cwd: root, stdio: 'pipe' });
+  execFileSync(process.execPath, [buildScript], {
+    cwd: root,
+    stdio: 'pipe',
+    env: preview ? { ...process.env, SCRIBERE_PREVIEW: '1' } : process.env
+  });
   return root;
 }
 
@@ -102,4 +122,25 @@ test('article pages expose chronological earlier and later entries', (t) => {
 
   assert.match(first, /Later entry[\s\S]*href="\/content\/2026\/03\/04\/01-second\/"/);
   assert.match(second, /Earlier entry[\s\S]*href="\/content\/2026\/01\/02\/01-first\/"/);
+});
+
+test('an instance can deploy an unlisted draft permalink', (t) => {
+  const root = buildFixture({ includeUnpublishedPages: true });
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const home = fs.readFileSync(path.join(root, 'build/index.html'), 'utf8');
+  const draft = fs.readFileSync(path.join(root, 'build/content/2026/03/05/01-draft/index.html'), 'utf8');
+
+  assert.doesNotMatch(home, /Unlisted draft/);
+  assert.match(draft, /Draft — unlisted/);
+  assert.match(draft, /DRAFT-BODY/);
+});
+
+test('local preview includes drafts in the journal', (t) => {
+  const root = buildFixture({ preview: true });
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const home = fs.readFileSync(path.join(root, 'build/index.html'), 'utf8');
+  const draft = fs.readFileSync(path.join(root, 'build/content/2026/03/05/01-draft/index.html'), 'utf8');
+
+  assert.match(home, /Unlisted draft/);
+  assert.match(draft, /Draft — unlisted/);
 });

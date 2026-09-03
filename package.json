@@ -12,7 +12,6 @@
     "edit": "node scripts/edit.js",
     "find": "node scripts/find.js",
     "domain": "node scripts/domain.js",
-    "lint": "node scripts/prose-lint.js",
     "lint:code": "eslint .",
     "test": "node --test test/*.test.js",
     "update": "node scripts/update.js",

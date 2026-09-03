@@ -1,6 +1,6 @@
 ---
 name: scribere-ops
-description: Manage Scribere and Semantic Scroll operations. Use when asked to set up a new instance, run the dev server or build, pull upstream updates, resolve build or lint issues, or adjust instance layout (content, templates, assets, queries, client JS) while keeping engine files intact.
+description: Manage Scribere and Semantic Scroll operations. Use when asked to set up a new instance, run the dev server or build, pull upstream updates, resolve build issues, or adjust instance layout (content, templates, assets, queries, client JS) while keeping engine files intact.
 ---
 
 # Scribere Ops
@@ -18,7 +18,7 @@ For first‑time setup, use `npx --yes github:jhlagado/scribere#main` in a fresh
 
 For updates, run `npm run update`. This refreshes the Scribere dependency, syncs the required npm scripts, and ensures `.gitignore` and `AGENTS.md` match current defaults.
 
-For local work, use `npm start` to build, serve, and watch. This writes the lint report to `temp/lint-report.json` without blocking the dev server. Use `npm run build` for a clean one‑shot build, and `npm run lint -- --all` when a full lint sweep is needed.
+For local work, use `npm start` to build, serve, and watch. Use `npm run build` for a clean one-shot build. The preview includes drafts and review copies while the production indexes include only published articles.
 
 If a site switches to a custom domain, update `content/site.json` with:
 

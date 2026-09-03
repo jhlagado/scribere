@@ -69,10 +69,8 @@ const SITE_LANGUAGE = SITE_CONFIG.language;
 const FEED_AUTHOR = SITE_CONFIG.author;
 const META_COLOR_SCHEME = 'light';
 const META_THEME_COLOR = '#ffffff';
-const LINT_REPORT_PATH = resolveLintReportPath(process.env.LINT_REPORT_PATH);
-const LINT_REPORT = loadLintReport(LINT_REPORT_PATH);
-const LINT_REPORTS_BY_PATH = LINT_REPORT ? buildLintReportMap(LINT_REPORT) : null;
 const SOFT_FAIL = process.env.SOFT_FAIL === '1';
+const PREVIEW_MODE = isTruthy(process.env.SCRIBERE_PREVIEW);
 const BUILD_REPORT_PATH = resolveBuildReportPath(process.env.BUILD_REPORT_PATH);
 const BUILD_WARNINGS = [];
 const INDEX_CACHE_PATH = path.join(ROOT, 'temp', 'index.json');
@@ -318,20 +316,6 @@ function normalizeBasePath(raw) {
   return base.replace(/\/+$/, '');
 }
 
-function resolveLintReportPath(raw) {
-  if (!raw) {
-    return null;
-  }
-  const value = String(raw).trim();
-  if (!value) {
-    return null;
-  }
-  if (path.isAbsolute(value)) {
-    return value;
-  }
-  return path.join(ROOT, value);
-}
-
 function resolveBuildReportPath(raw) {
   if (!raw) {
     return path.join(ROOT, 'temp', 'build-report.json');
@@ -365,16 +349,14 @@ function writeBuildReport() {
   if (!BUILD_REPORT_PATH) {
     return;
   }
-  if (!LINT_REPORT && BUILD_WARNINGS.length === 0) {
+  if (BUILD_WARNINGS.length === 0) {
     return;
   }
   ensureDir(path.dirname(BUILD_REPORT_PATH));
   const payload = {
     generatedAt: new Date().toISOString(),
     softFail: SOFT_FAIL,
-    warnings: BUILD_WARNINGS.slice(),
-    lintReportPath: LINT_REPORT_PATH || null,
-    lintReport: LINT_REPORT || null
+    warnings: BUILD_WARNINGS.slice()
   };
   writeFile(BUILD_REPORT_PATH, `${JSON.stringify(payload, null, 2)}\n`);
 }
@@ -390,33 +372,6 @@ function handleBuildErrors(errors, contextLabel) {
     const prefix = contextLabel ? `${contextLabel}: ` : '';
     recordBuildWarning(`${prefix}${message}`);
   }
-}
-
-function loadLintReport(filePath) {
-  if (!filePath || !fs.existsSync(filePath)) {
-    return null;
-  }
-  try {
-    const raw = fs.readFileSync(filePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.reports)) {
-      return null;
-    }
-    return parsed;
-  } catch (error) {
-    return null;
-  }
-}
-
-function buildLintReportMap(report) {
-  const map = new Map();
-  for (const entry of report.reports || []) {
-    if (!entry || !entry.filePath) {
-      continue;
-    }
-    map.set(path.resolve(entry.filePath), entry);
-  }
-  return map;
 }
 
 function loadInstanceSite(filePath) {
@@ -955,7 +910,7 @@ function renderSite(index, queryResults) {
   const indexTemplate = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const homeBody = buildSummaryCardSection('latest-posts');
   const homeExtra = buildYearListSection(published, ARCHIVE_ROOT_PATH, 'Years');
-  const renderQueries = LINT_REPORTS_BY_PATH
+  const renderQueries = PREVIEW_MODE
     ? {
         ...queryResults,
         'latest-posts': sortItems(
@@ -1001,7 +956,7 @@ function renderSite(index, queryResults) {
   }
 
   const articleTemplate = fs.readFileSync(ARTICLE_TEMPLATE, 'utf8');
-  const articleCandidates = LINT_REPORTS_BY_PATH
+  const articleCandidates = PREVIEW_MODE
     ? index
     : (queryResults['article-pages'] || []);
 
@@ -1052,7 +1007,6 @@ function renderSite(index, queryResults) {
   renderTagIndex(queryResults);
   renderSeriesArchives(published);
   renderSeriesIndex(published);
-  renderLintIndex(index);
   renderFeed(queryResults, published);
   renderTagFeeds(published);
   renderSeriesFeeds(published);
@@ -1070,7 +1024,7 @@ function renderSiteIncremental(index, queryResults, changes) {
   const indexTemplate = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
   const homeBody = buildSummaryCardSection('latest-posts');
   const homeExtra = buildYearListSection(published, ARCHIVE_ROOT_PATH, 'Years');
-  const renderQueries = LINT_REPORTS_BY_PATH
+  const renderQueries = PREVIEW_MODE
     ? {
         ...queryResults,
         'latest-posts': sortItems(
@@ -1116,7 +1070,7 @@ function renderSiteIncremental(index, queryResults, changes) {
   }
 
   const articleTemplate = fs.readFileSync(ARTICLE_TEMPLATE, 'utf8');
-  const articleCandidates = LINT_REPORTS_BY_PATH
+  const articleCandidates = PREVIEW_MODE
     ? index
     : (queryResults['article-pages'] || []);
   const changedRelDirs = new Set(changes.changed.keys());
@@ -1180,7 +1134,6 @@ function renderSiteIncremental(index, queryResults, changes) {
     renderSeriesIndex(published);
   }
 
-  renderLintIndex(index);
   renderFeed(queryResults, published);
   writeSitemap(published);
   writeRobots();
@@ -1533,18 +1486,6 @@ function formatDisplayDate(article) {
 
 function formatSitemapDate(article) {
   return `${article.year}-${article.month}-${article.day}`;
-}
-
-function tallyLintSeverities(issues) {
-  const counts = { high: 0, medium: 0, low: 0 };
-  for (const issue of issues) {
-    const severity = issue.severity || 'low';
-    if (!counts[severity]) {
-      counts[severity] = 0;
-    }
-    counts[severity] += 1;
-  }
-  return counts;
 }
 
 function buildSitemapXml(entries) {
@@ -2063,119 +2004,6 @@ function renderSeriesIndex(published) {
   writeFile(path.join(OUTPUT_DIR, 'series', 'index.html'), html);
 }
 
-function renderLintIndex(index) {
-  if (!LINT_REPORTS_BY_PATH) {
-    return;
-  }
-  const entries = collectLintEntries(index);
-  const pageBody = entries.length
-    ? buildLintIndexList(entries)
-    : '<p class="summary-empty">No lint issues in this build.</p>';
-  const intro = '<p class="summary-empty">Dev-only view of articles that fail lint. Fixing these makes the published output predictable.</p>';
-  const template = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
-  const html = renderTemplate(
-    applySlots(
-      applyMeta(template, {
-        canonical: joinUrl(SITE_URL, '/lint/'),
-        description: 'Lint report for draft articles.',
-        title: 'Lint report'
-      }),
-      {
-        'page-heading': buildHeading('Lint report'),
-        'page-intro': intro,
-        'page-body': pageBody,
-        'page-extra': ''
-      }
-    ),
-    {}
-  );
-  writeFile(path.join(OUTPUT_DIR, 'lint', 'index.html'), html);
-}
-
-function collectLintEntries(index) {
-  if (!LINT_REPORTS_BY_PATH) {
-    return [];
-  }
-  const articleByPath = new Map(index.map((article) => [path.resolve(article.mdPath), article]));
-  const items = [];
-  for (const [filePath, report] of LINT_REPORTS_BY_PATH.entries()) {
-    if (!report || !report.issues || report.issues.length === 0) {
-      continue;
-    }
-    if (path.basename(filePath) !== 'article.md') {
-      continue;
-    }
-    const article = articleByPath.get(filePath);
-    if (!article) {
-      continue;
-    }
-    items.push({ article, report });
-  }
-  const reportByPath = new Map(items.map((item) => [path.resolve(item.article.mdPath), item.report]));
-  const sortedArticles = sortItems(items.map((item) => item.article), 'date-desc');
-  return sortedArticles.map((article) => ({
-    article,
-    report: reportByPath.get(path.resolve(article.mdPath))
-  }));
-}
-
-function buildLintIndexList(entries) {
-  const items = entries.map(({ article, report }) => renderLintIndexItem(article, report)).join('\n');
-  return `<ul class="lint-list">\n${items}\n</ul>`;
-}
-
-function renderLintIndexItem(article, report) {
-  const title = article.frontmatter.title ? renderInline(article.frontmatter.title) : escapeHtml(article.slug);
-  const dateText = formatDisplayDate(article);
-  const counts = report.severityCounts || tallyLintSeverities(report.issues || []);
-  const metaParts = [dateText];
-  if (article.frontmatter.series) {
-    metaParts.push(`Series: <a href="/series/${encodeURIComponent(article.frontmatter.series)}/">${escapeHtml(article.frontmatter.series)}</a>`);
-  }
-  metaParts.push(formatLintCounts(counts));
-  const issueItems = buildLintIssueList(report.issues || []);
-  return [
-    '  <li class="lint-item">',
-    `    <h2 class="lint-item-title"><a href="${article.publicPath}">${title}</a></h2>`,
-    `    <p class="lint-item-meta">${metaParts.join(' | ')}</p>`,
-    issueItems,
-    '  </li>'
-  ].join('\n');
-}
-
-function buildLintIssueList(issues) {
-  if (!issues.length) {
-    return '    <p class="lint-item-empty">No issues.</p>';
-  }
-  const limited = issues.slice(0, 5);
-  const items = limited.map((issue) => {
-    const lineLabel = issue.line ? `Line ${issue.line}` : 'Line n/a';
-    return `      <li>${escapeHtml(lineLabel)}: ${escapeHtml(issue.message)}</li>`;
-  });
-  if (issues.length > 5) {
-    items.push(`      <li>And ${issues.length - 5} more.</li>`);
-  }
-  return [
-    '    <ul class="lint-item-issues">',
-    ...items,
-    '    </ul>'
-  ].join('\n');
-}
-
-function formatLintCounts(counts) {
-  const parts = [];
-  if (counts.high) {
-    parts.push(`${counts.high} high`);
-  }
-  if (counts.medium) {
-    parts.push(`${counts.medium} medium`);
-  }
-  if (counts.low) {
-    parts.push(`${counts.low} low`);
-  }
-  return parts.length ? parts.join(', ') : '0 issues';
-}
-
 function renderTemplate(html, queryResults) {
   const templateRegex = /<template\b([^>]*)>([\s\S]*?)<\/template>/g;
 
@@ -2261,14 +2089,17 @@ function renderTemplate(html, queryResults) {
 function renderArticleBody(article) {
   const raw = fs.readFileSync(article.mdPath, 'utf8');
   const parsed = parseFrontmatter(raw);
+  const statusBanner = renderStatusBanner(article);
   if (!parsed) {
     if (!SOFT_FAIL) {
       throw new Error(`Missing frontmatter in ${article.relDir}/article.md`);
     }
     recordBuildWarning(`Missing frontmatter in ${article.relDir}/article.md (rendering full file as body)`);
-    return renderMarkdown(raw, article.publicPath);
+    const body = renderMarkdown(raw, article.publicPath);
+    return statusBanner ? `${statusBanner}\n${body}` : body;
   }
-  return renderMarkdown(parsed.body, article.publicPath);
+  const body = renderMarkdown(parsed.body, article.publicPath);
+  return statusBanner ? `${statusBanner}\n${body}` : body;
 }
 
 function renderArticleMetaTop(article) {
@@ -2306,10 +2137,6 @@ function renderFullArticle(article) {
     parts.push(metaTop);
     parts.push('  </header>');
   }
-  const lintBanner = renderLintBanner(article);
-  if (lintBanner) {
-    parts.push(lintBanner);
-  }
   parts.push(body);
   if (metaBottom) {
     parts.push('  <footer class="article-meta article-meta-bottom">');
@@ -2320,47 +2147,19 @@ function renderFullArticle(article) {
   return parts.join('\n');
 }
 
-function renderLintBanner(article) {
-  if (!LINT_REPORTS_BY_PATH) {
+function renderStatusBanner(article) {
+  const labels = {
+    draft: 'Draft — unlisted',
+    review: 'Review copy — unlisted',
+    archived: 'Archived — unlisted'
+  };
+  const label = labels[article.frontmatter.status];
+  if (!label) {
     return '';
-  }
-  const report = LINT_REPORTS_BY_PATH.get(path.resolve(article.mdPath));
-  const isDraft = article.frontmatter.status === 'draft';
-  if ((!report || !report.issues || report.issues.length === 0) && !isDraft) {
-    return '';
-  }
-  if (!report || !report.issues || report.issues.length === 0) {
-    return [
-      '  <div class="lint-banner" role="note" aria-label="Draft status">',
-      '    <p class="lint-banner-title">Draft status: no lint issues</p>',
-      '  </div>'
-    ].join('\n');
-  }
-  const counts = report.severityCounts || tallyLintSeverities(report.issues);
-  const summaryParts = [];
-  if (counts.high) {
-    summaryParts.push(`high ${counts.high}`);
-  }
-  if (counts.medium) {
-    summaryParts.push(`medium ${counts.medium}`);
-  }
-  if (counts.low) {
-    summaryParts.push(`low ${counts.low}`);
-  }
-  const summary = summaryParts.length ? summaryParts.join(', ') : `${report.issues.length} issues`;
-  const items = report.issues.slice(0, 6).map((issue) => {
-    const lineLabel = issue.line ? `Line ${issue.line}` : 'Line n/a';
-    return `      <li>${escapeHtml(lineLabel)}: ${escapeHtml(issue.message)}</li>`;
-  });
-  if (report.issues.length > 6) {
-    items.push(`      <li>And ${report.issues.length - 6} more.</li>`);
   }
   return [
-    '  <div class="lint-banner" role="note" aria-label="Draft issues">',
-    `    <p class="lint-banner-title">Draft issues: ${escapeHtml(summary)}</p>`,
-    '    <ul class="lint-banner-list">',
-    ...items,
-    '    </ul>',
+    `  <div class="status-banner status-${article.frontmatter.status}" role="note">`,
+    `    <p>${label}</p>`,
     '  </div>'
   ].join('\n');
 }

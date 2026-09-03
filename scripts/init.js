@@ -207,7 +207,6 @@ async function main() {
       new: "node node_modules/scribere/scripts/new.js",
       edit: "node node_modules/scribere/scripts/edit.js",
       domain: "node node_modules/scribere/scripts/domain.js",
-      lint: "node node_modules/scribere/scripts/prose-lint.js",
       update: "node node_modules/scribere/scripts/update.js",
       publish: "node node_modules/scribere/scripts/publish.js",
       setup: "node node_modules/scribere/scripts/setup.js",

@@ -7,9 +7,9 @@
   --color-code-border: #e0e0e0;
   --color-code-text: #1a1a1a;
   --color-inline-code-bg: #f2f2f2;
-  --color-lint-bg: #fff4f4;
-  --color-lint-border: #f0b4b4;
-  --color-lint-text: #7a1f1f;
+  --color-status-bg: #fff4f4;
+  --color-status-border: #f0b4b4;
+  --color-status-text: #7a1f1f;
   --content-width: 64ch;
 }
 
@@ -23,9 +23,9 @@
     --color-code-border: #2f2f2f;
     --color-code-text: #f5f5f5;
     --color-inline-code-bg: #202020;
-    --color-lint-bg: #2a1515;
-    --color-lint-border: #5a2a2a;
-    --color-lint-text: #f1b4b4;
+    --color-status-bg: #2a1515;
+    --color-status-border: #5a2a2a;
+    --color-status-text: #f1b4b4;
   }
 }
 
@@ -270,48 +270,18 @@ main h1:first-child {
   margin-top: 5rem;
 }
 
-.lint-banner {
+.status-banner {
   margin: 1rem 0 1.5rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--color-lint-border);
-  background: var(--color-lint-bg);
-  color: var(--color-lint-text);
+  border: 1px solid var(--color-status-border);
+  background: var(--color-status-bg);
+  color: var(--color-status-text);
   border-radius: 6px;
 }
 
-.lint-banner-title {
-  margin: 0 0 0.5rem;
+.status-banner p {
+  margin: 0;
   font-weight: 600;
-}
-
-.lint-banner-list {
-  margin: 0;
-  padding-left: 1.2rem;
-  color: inherit;
-}
-
-.lint-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.lint-item + .lint-item {
-  margin-top: 1.5rem;
-}
-
-.lint-item-title {
-  margin: 0 0 0.4rem;
-}
-
-.lint-item-meta {
-  margin: 0 0 0.6rem;
-  color: var(--color-muted);
-}
-
-.lint-item-issues {
-  margin: 0;
-  padding-left: 1.2rem;
 }
 
 .article-entry > h1 {

@@ -10,7 +10,7 @@ The build must be predictable, debuggable, and safe. Markdown remains the source
 
 The pipeline optimises for two different contexts:
 
-- **Local development**: fast rebuilds, drafts visible, lint warnings shown.
+- **Local development**: fast rebuilds, drafts visible, structural warnings shown.
 - **CI publishing**: deterministic output, published content only.
 
 ---
@@ -33,9 +33,9 @@ The dev loop uses incremental rebuilds. It runs with:
 
 - `INCREMENTAL=1`
 - `SOFT_FAIL=1`
-- `LINT_REPORT_PATH=temp/lint-report.json`
+- `SCRIBERE_PREVIEW=1`
 
-Drafts and lint‑failing articles still render in dev, with a visible warning block above the article. The cache is stored at `temp/index.json` and is disposable.
+Drafts and review copies render in the local preview with a visible status block above the article. The cache is stored at `temp/index.json` and is disposable.
 
 If the cache is missing or invalid, the build falls back to a full scan and logs a warning.
 
