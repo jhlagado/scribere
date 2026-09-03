@@ -1600,17 +1600,6 @@ function buildSummaryListSection(queryName, emptyText = 'No posts yet.') {
   ].join('\n');
 }
 
-function buildArticleListSection(queryName, emptyText = 'No posts yet.') {
-  const empty = escapeHtml(emptyText);
-  return [
-    '<div class="series-entries">',
-    `  <template data-query="${queryName}" data-view="article-full">`,
-    `    <p class="summary-empty">${empty}</p>`,
-    '  </template>',
-    '</div>'
-  ].join('\n');
-}
-
 function buildSummaryCardSection(queryName, emptyText = 'No posts yet.') {
   const empty = escapeHtml(emptyText);
   return [
@@ -1918,7 +1907,7 @@ function renderSeriesArchives(published, targetSeries = null) {
       ].join('\n')
       : '';
 
-    const pageBody = buildArticleListSection('page-posts');
+    const pageBody = buildSummaryCardSection('page-posts');
     const slots = {
       'page-heading': buildHeading(`Series: ${series}`),
       'page-intro': '',
@@ -1944,7 +1933,7 @@ function renderSeriesArchives(published, targetSeries = null) {
     for (const year of years) {
       const yearItems = seriesItems.filter((item) => item.year === year);
       const yearItemsAsc = sortItems(yearItems, 'date-asc');
-      const yearBody = buildArticleListSection('page-posts');
+      const yearBody = buildSummaryCardSection('page-posts');
       const yearSlots = {
         'page-heading': buildHeading(`Series: ${series} - ${year}`),
         'page-intro': '',
