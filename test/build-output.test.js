@@ -54,6 +54,7 @@ function buildFixture({ includeUnpublishedPages = false, preview = false } = {})
     'status: published',
     'title: "First article"',
     'summary: "First summary."',
+    'series: sequence',
     'tags:',
     '  - z80',
     '---',
@@ -68,6 +69,7 @@ function buildFixture({ includeUnpublishedPages = false, preview = false } = {})
     'status: published',
     'title: "Second article"',
     'summary: "Second summary."',
+    'series: sequence',
     'thumbnail: assets/hero.png',
     'tags:',
     '  - ai',
@@ -122,6 +124,27 @@ test('article pages expose chronological earlier and later entries', (t) => {
 
   assert.match(first, /Later entry[\s\S]*href="\/content\/2026\/03\/04\/01-second\/"/);
   assert.match(second, /Earlier entry[\s\S]*href="\/content\/2026\/01\/02\/01-first\/"/);
+});
+
+test('every article listing renders the same linked summary cards', (t) => {
+  const root = buildFixture();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const paths = [
+    'build/index.html',
+    'build/tags/z80/index.html',
+    'build/series/sequence/index.html',
+    'build/content/2026/index.html',
+    'build/content/2026/03/index.html'
+  ];
+
+  for (const relativePath of paths) {
+    const html = fs.readFileSync(path.join(root, relativePath), 'utf8');
+    assert.match(html, /<article class="summary"/i, relativePath);
+    assert.match(html, /<h2 class="summary-title"><a href="\/content\/2026\//i, relativePath);
+  }
+
+  const series = fs.readFileSync(path.join(root, 'build/series/sequence/index.html'), 'utf8');
+  assert.doesNotMatch(series, /FIRST-BODY-SHOULD-NOT-APPEAR-ON-HOME/);
 });
 
 test('an instance can deploy an unlisted draft permalink', (t) => {
