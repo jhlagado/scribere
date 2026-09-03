@@ -87,7 +87,7 @@ const SITEMAP_PATH = path.join(OUTPUT_DIR, 'sitemap.xml');
 const ROBOTS_PATH = path.join(OUTPUT_DIR, 'robots.txt');
 
 const STATUS_VALUES = new Set(['draft', 'review', 'published', 'archived']);
-const INTERNAL_QUERY_NAMES = new Set(['article-page']);
+const INTERNAL_QUERY_NAMES = new Set(['article-page', 'article-previous', 'article-next']);
 const ALLOWED_CONTENT_ROOT_DIRS = new Set(['assets', 'templates']);
 const MAX_SLUG_LENGTH = 80;
 const MAX_ASSET_NAME_LENGTH = 80;
@@ -953,7 +953,7 @@ function renderSite(index, queryResults) {
     : index.filter((item) => item.frontmatter.status === 'published').sort(makeSortFn('date-asc'));
 
   const indexTemplate = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
-  const homeBody = buildArticleListSection('latest-posts');
+  const homeBody = buildSummaryCardSection('latest-posts');
   const homeExtra = buildYearListSection(published, ARCHIVE_ROOT_PATH, 'Years');
   const renderQueries = LINT_REPORTS_BY_PATH
     ? {
@@ -1008,7 +1008,10 @@ function renderSite(index, queryResults) {
   const outputPaths = new Set();
 
   for (const article of articleCandidates) {
-    const perArticleResults = { 'article-page': [article] };
+    const perArticleResults = {
+      'article-page': [article],
+      ...buildArticleNeighborResults(article, published)
+    };
     const articleTitle = articleMetaTitle(article);
     const articleHtml = renderTemplate(
       applySlots(
@@ -1065,7 +1068,7 @@ function renderSiteIncremental(index, queryResults, changes) {
     : index.filter((item) => item.frontmatter.status === 'published').sort(makeSortFn('date-asc'));
 
   const indexTemplate = fs.readFileSync(INDEX_TEMPLATE, 'utf8');
-  const homeBody = buildArticleListSection('latest-posts');
+  const homeBody = buildSummaryCardSection('latest-posts');
   const homeExtra = buildYearListSection(published, ARCHIVE_ROOT_PATH, 'Years');
   const renderQueries = LINT_REPORTS_BY_PATH
     ? {
@@ -1122,7 +1125,10 @@ function renderSiteIncremental(index, queryResults, changes) {
     if (!changedRelDirs.has(article.relDir)) {
       continue;
     }
-    const perArticleResults = { 'article-page': [article] };
+    const perArticleResults = {
+      'article-page': [article],
+      ...buildArticleNeighborResults(article, published)
+    };
     const articleTitle = articleMetaTitle(article);
     const articleHtml = renderTemplate(
       applySlots(
@@ -1516,8 +1522,13 @@ function formatRssDate(article) {
 }
 
 function formatDisplayDate(article) {
-  const monthLabel = monthName(article.month);
-  return `${monthLabel} ${Number(article.day)}, ${article.year}`;
+  const date = new Date(Date.UTC(Number(article.year), Number(article.month) - 1, Number(article.day)));
+  return new Intl.DateTimeFormat(SITE_LANGUAGE, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(date);
 }
 
 function formatSitemapDate(article) {
@@ -1657,6 +1668,29 @@ function buildArticleListSection(queryName, emptyText = 'No posts yet.') {
     '  </template>',
     '</div>'
   ].join('\n');
+}
+
+function buildSummaryCardSection(queryName, emptyText = 'No posts yet.') {
+  const empty = escapeHtml(emptyText);
+  return [
+    '<div class="series-entries">',
+    `  <template data-query="${queryName}" data-view="summary">`,
+    `    <p class="summary-empty">${empty}</p>`,
+    '  </template>',
+    '</div>'
+  ].join('\n');
+}
+
+function buildArticleNeighborResults(article, published) {
+  const ordered = published.slice().sort(makeSortFn('date-asc'));
+  const currentIndex = ordered.findIndex((item) => item.relDir === article.relDir);
+  if (currentIndex < 0) {
+    return { 'article-previous': [], 'article-next': [] };
+  }
+  return {
+    'article-previous': currentIndex > 0 ? [ordered[currentIndex - 1]] : [],
+    'article-next': currentIndex < ordered.length - 1 ? [ordered[currentIndex + 1]] : []
+  };
 }
 
 function buildTagListSection(queryName, emptyText = 'No tags yet.') {
@@ -2343,16 +2377,19 @@ function renderSummary(article) {
   }
   const titleHtml = renderInline(titleText);
   const summaryHtml = fm.summary ? renderInline(fm.summary) : null;
-  const dateText = `${article.year}-${article.month}-${article.day}`;
+  const dateValue = `${article.year}-${article.month}-${article.day}`;
+  const dateText = formatDisplayDate(article);
+  const primaryTag = (fm.tags || []).map(normalizeTag).find(Boolean) || '';
 
   const parts = [];
-  parts.push('<article class="summary">');
+  const primaryTagAttribute = primaryTag ? ` data-primary-tag="${escapeHtml(primaryTag)}"` : '';
+  parts.push(`<article class="summary"${primaryTagAttribute}>`);
   parts.push('  <header class="summary-header">');
   parts.push(`    <h2 class="summary-title"><a href="${article.publicPath}">${titleHtml}</a></h2>`);
   parts.push('  </header>');
 
   const metaParts = [];
-  metaParts.push(`<time datetime="${dateText}">${dateText}</time>`);
+  metaParts.push(`<time datetime="${dateValue}">${dateText}</time>`);
   if (fm.series) {
     const seriesText = escapeHtml(fm.series);
     metaParts.push(`Series: <a href="/series/${encodeURIComponent(fm.series)}/">${seriesText}</a>`);
