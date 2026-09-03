@@ -141,4 +141,3 @@ Build should warn in dev when:
 - **Metadata**: descriptive information used for indexing and summaries.
 - **Template**: the HTML layout that receives stamped content.
 - **Build**: the process that renders Markdown into HTML.
-- **Lint**: an automated check for writing and formatting issues.

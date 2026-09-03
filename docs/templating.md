@@ -330,6 +330,8 @@ Elements are omitted when their values are missing (for example, no `<figure>` w
 
 Summary dates are formatted using the instance language from `content/site.json`; the machine-readable `datetime` attribute always remains ISO `YYYY-MM-DD`. When tags exist, `data-primary-tag` contains the normalized first tag. This lets an instance give broad topics distinct visual treatments without putting metadata logic into its templates.
 
+Every article listing uses this summary structure. The journal, chronological archives, tag archives, and series archives may differ in selection and order, but they do not substitute full article bodies or a second card format. An instance can therefore give every listing the same visual and interactive treatment through the shared summary classes.
+
 ---
 
 ### 3.5 Article Metadata Blocks
