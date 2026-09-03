@@ -1,6 +1,6 @@
 ---
 name: article-authoring
-description: Write, edit, and structure Scribere articles in `content/**/article.md`. Use when asked to create a new article, revise prose, adjust frontmatter (title/summary/tags/series/status), add assets and captions, or fix lint issues while following `docs/authoring.md` and `docs/article.md`.
+description: Write, edit, and structure Scribere articles in `content/**/article.md`. Use when asked to create a new article, revise prose, adjust frontmatter (title/summary/tags/series/status), or add assets and captions while following `docs/authoring.md` and `docs/article.md`.
 ---
 
 # Article Authoring
@@ -20,7 +20,7 @@ When updating title, status, tags, or series, use `npm run edit` and follow the 
 
 When revising prose, keep paragraphs substantive, avoid contrast framing and rhetorical filler, and use UK/AU spelling. Preserve the author’s voice and focus on clarity, specificity, and readable structure, without introducing new jargon or template logic.
 
-If linting is requested, run `npm run lint -- --all` (or use the repository’s lint command as given). Address warnings directly in the text. When lint is not requested, still avoid the patterns flagged in `docs/authoring.md` and ensure summaries remain accurate and useful in index views.
+Review prose with the applicable writing skill and the principles in `docs/authoring.md`. This judgment belongs to authoring and revision rather than the site build. Keep summaries accurate and useful in index views.
 
 When adding assets, keep them local to the article folder and use clear captions and alt text. Ensure all visible text remains in the Markdown body and keep metadata separate from narrative content.
 

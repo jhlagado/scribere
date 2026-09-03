@@ -105,12 +105,11 @@ You can filter by status or limit the results:
 npm run find -- "templating" --status draft --limit 10
 ```
 
-### Check or rebuild manually
+### Build manually
 
-If you want a manual check outside the dev loop:
+If you want a one-off build outside the dev loop:
 
 ```sh
-npm run lint
 npm run build
 npm run rebuild
 ```
@@ -123,7 +122,7 @@ npm run rebuild
 npm run publish
 ```
 
-This runs the prose linter and blocks only on high‑severity issues. If it passes, it stages changes, commits, and pushes to `origin`. GitHub Actions then builds and publishes the site.
+This stages the changes, commits them, and pushes to `origin`. GitHub Actions then builds and publishes the site.
 
 ### Deploy on GitHub Pages
 

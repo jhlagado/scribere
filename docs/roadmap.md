@@ -24,7 +24,7 @@ This document tracks current and pending work in Scribere. It replaces older pla
    - Avoid crashing on non‑critical data issues; surface them in logs and the dev UI.
 
 3. **Script testing**
-   - Add unit tests for build, lint, and setup/update scripts.
+   - Add unit tests for build, publishing, and setup/update scripts.
    - Establish a minimal test runner and coverage threshold.
 
 ---
@@ -32,7 +32,7 @@ This document tracks current and pending work in Scribere. It replaces older pla
 ## Near‑term improvements
 
 - **Base‑URL handling** across local dev, GitHub Pages, and custom domains with no manual steps.
-- **Lint visibility**: keep draft and lint warnings visible in dev without blocking previews.
+- **Preview visibility**: keep draft and review status visible without adding unpublished work to public indexes.
 
 ---
 
